@@ -150,56 +150,70 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
   }
   console.log('⏰ Horários de atendimento configurados.');
 
-  // 6. Cadastrar Itens Iniciais no Portfólio (com fotos reais do catálogo)
+  // 6. Cadastrar Itens Iniciais no Portfólio (com fotos reais de alta qualidade da Letícia)
   const portfolioItems = [
     {
       stylistId: stylist.id,
-      imageUrl: '/catalogo/design-simples-hq.png',
-      title: 'Design de Sobrancelhas Simples',
+      title: 'Design de Sobrancelhas (Antes & Depois)',
       category: 'Design',
-      description: 'Mapeamento facial completo com pinça e linha de precisão, valorizando a expressão natural.'
+      imageUrl: '/catalogo/design-sobrancelhas-real.jpg',
+      description: 'Mapeamento facial simétrico e remoção precisa dos pelos, valorizando a expressão natural e o desenho harmônico.'
     },
     {
       stylistId: stylist.id,
-      imageUrl: '/catalogo/brow-lamination-hq.png',
-      title: 'Brow Lamination Fluffy',
+      title: 'Brow Lamination Fluffy & Cílios',
       category: 'Lamination',
-      description: 'Alinhamento dos fios rebeldes para cima com efeito encorpado, nutrição e acabamento glow.'
+      imageUrl: '/catalogo/brow-lamination-real.jpg',
+      description: 'Alinhamento completo dos fios com efeito encorpado moderno, nutrição e acabamento glow iluminado.'
     },
     {
       stylistId: stylist.id,
-      imageUrl: '/catalogo/micropigmentacao-hq.png',
-      title: 'Micropigmentação Fio a Fio',
+      title: 'Micropigmentação Fio a Fio Hiper-realista',
       category: 'Micropigmentação',
-      description: 'Técnica hiper-realista para preenchimento de falhas com naturalidade e longa durabilidade.'
+      imageUrl: '/catalogo/micropigmentacao-fio-a-fio-real.jpg',
+      description: 'Técnica de fios milimétricos hiper-realistas para preenchimento de falhas com máxima naturalidade e longa duração.'
     },
     {
       stylistId: stylist.id,
-      imageUrl: 'https://images.unsplash.com/photo-1597225244660-1cd128c64284?auto=format&fit=crop&w=800&q=80',
-      title: 'Design com Henna Natural',
+      title: 'Transformação Brow Lamination',
+      category: 'Lamination',
+      imageUrl: '/catalogo/brow-lamination-transformacao-real.jpg',
+      description: 'Transformação completa de antes e depois: olhar aberto, fios direcionados e simetria perfeita.'
+    },
+    {
+      stylistId: stylist.id,
+      title: 'Design com Henna & Definição',
       category: 'Henna',
-      description: 'Preenchimento harmônico com henna dermatológica respeitando o subtom de pele.'
+      imageUrl: '/catalogo/design-henna-real.jpg',
+      description: 'Preenchimento harmônico com henna de alta fixação para correção de falhas e sombreamento natural.'
     },
     {
       stylistId: stylist.id,
-      imageUrl: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?auto=format&fit=crop&w=800&q=80',
-      title: 'Despigmentação Química',
-      category: 'Despigmentação',
-      description: 'Procedimento seguro para clarear e remover pigmentos antigos indesejados de forma gradual.'
+      title: 'Design Masculino com Harmonia Natural',
+      category: 'Design Masculino',
+      imageUrl: '/catalogo/design-masculino-real.jpg',
+      description: 'Alinhamento anatômico para homens, limpando o excesso sem afinar e preservando a naturalidade da expressão.'
     },
     {
       stylistId: stylist.id,
-      imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
-      title: 'Epilação Facial & Buço',
-      category: 'Facial',
-      description: 'Pele macia, remoção delicada de pelos com fórmula suave hipoalergênica.'
+      title: 'Efeito Fluffy Natural',
+      category: 'Lamination',
+      imageUrl: '/catalogo/brow-fluffy-real.jpg',
+      description: 'Fios alinhados e penteados para cima com caimento orgânico e elegante, ideal para o dia a dia.'
+    },
+    {
+      stylistId: stylist.id,
+      title: 'Alinhamento & Visagismo Facial',
+      category: 'Design',
+      imageUrl: '/catalogo/alinhamento-expressao-real.jpg',
+      description: 'Visagismo facial exclusivo Studio Letícia Oliveira para destacar o melhor do seu olhar com delicadeza.'
     }
   ];
 
   for (const item of portfolioItems) {
     await prisma.portfolioItem.create({ data: item });
   }
-  console.log('📸 Portfólio inicial cadastrado.');
+  console.log('📸 Portfólio oficial atualizado com fotos reais.');
 
   console.log('✅ Seed finalizado com sucesso!');
 }
