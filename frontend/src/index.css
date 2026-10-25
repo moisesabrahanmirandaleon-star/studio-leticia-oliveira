@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-studio-50: #FAF6F4;
+  --color-studio-100: #F5ECE8;
+  --color-studio-200: #EBDCD5;
+  --color-studio-300: #DDBFB2;
+  --color-studio-400: #CCA08F;
+  --color-studio-500: #B87F6C;
+  --color-studio-600: #A06654;
+  --color-studio-700: #7E4E40;
+}
+
+body {
+  background-color: #FAF6F4;
+  color: #292524;
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Custom scrollbar para modal de agendamento */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #CCA08F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B87F6C;
+}

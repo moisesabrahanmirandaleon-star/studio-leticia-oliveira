@@ -1,0 +1,106 @@
+// Prisma schema para Studio de Beleza / Sobrancelhas
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("ADMIN") // "ADMIN" | "ESTILISTA"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  stylist      Stylist?
+}
+
+model Stylist {
+  id           Int              @id @default(autoincrement())
+  userId       Int?             @unique
+  user         User?            @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name         String
+  bio          String?
+  photoUrl     String?
+  phone        String?
+  active       Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  services     StylistService[]
+  schedules    Schedule[]
+  appointments Appointment[]
+  portfolio    PortfolioItem[]
+}
+
+model Service {
+  id              Int              @id @default(autoincrement())
+  name            String
+  description     String?
+  price           Float
+  durationMinutes Int              // Ex: 10, 20, 30, 60
+  category        String?          @default("Geral")
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  stylists        StylistService[]
+  appointments    Appointment[]
+}
+
+model StylistService {
+  id        Int     @id @default(autoincrement())
+  stylistId Int
+  serviceId Int
+  active    Boolean @default(true)
+  stylist   Stylist @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([stylistId, serviceId])
+}
+
+model Schedule {
+  id         Int     @id @default(autoincrement())
+  stylistId  Int
+  dayOfWeek  Int     // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
+  startTime  String  // "09:00"
+  endTime    String  // "19:00"
+  breakStart String? // "12:00"
+  breakEnd   String? // "13:00"
+  isActive   Boolean @default(true)
+  stylist    Stylist @relation(fields: [stylistId], references: [id], onDelete: Cascade)
+
+  @@unique([stylistId, dayOfWeek])
+}
+
+model Appointment {
+  id            Int      @id @default(autoincrement())
+  clientName    String
+  clientPhone   String
+  clientEmail   String?
+  stylistId     Int
+  serviceId     Int
+  date          String   // "YYYY-MM-DD"
+  startTime     String   // "09:00"
+  endTime       String   // "09:30"
+  status        String   @default("CONFIRMADO") // "PENDENTE", "CONFIRMADO", "CANCELADO", "CONCLUIDO"
+  paymentMethod String   @default("PRESENCIAL") // "PRESENCIAL", "ONLINE"
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  stylist       Stylist  @relation(fields: [stylistId], references: [id], onDelete: Restrict)
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+}
+
+model PortfolioItem {
+  id          Int      @id @default(autoincrement())
+  stylistId   Int?
+  imageUrl    String
+  title       String
+  category    String   // "Design", "Henna", "Lamination", "Facial"
+  description String?
+  createdAt   DateTime @default(now())
+  stylist     Stylist? @relation(fields: [stylistId], references: [id], onDelete: SetNull)
+}
