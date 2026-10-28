@@ -3,7 +3,8 @@ import {
   createAppointment,
   listAppointments,
   updateAppointmentStatus,
-  rescheduleAppointment
+  rescheduleAppointment,
+  deleteAppointment
 } from '../controllers/appointmentController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -16,5 +17,6 @@ router.post('/', createAppointment);
 router.get('/', authenticateToken, listAppointments);
 router.patch('/:id/status', authenticateToken, updateAppointmentStatus);
 router.patch('/:id/reschedule', authenticateToken, rescheduleAppointment);
+router.delete('/:id', authenticateToken, deleteAppointment);
 
 export default router;

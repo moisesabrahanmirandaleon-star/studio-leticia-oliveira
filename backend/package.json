@@ -5,11 +5,12 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate",
-    "db:seed": "node prisma/seed.js",
+    "dev": "node scripts/prepareSchema.js && nodemon src/server.js",
+    "start": "node scripts/prepareSchema.js && node src/server.js",
+    "build": "node scripts/prepareSchema.js && prisma generate && prisma db push --accept-data-loss",
+    "db:push": "node scripts/prepareSchema.js && prisma db push",
+    "db:generate": "node scripts/prepareSchema.js && prisma generate",
+    "db:seed": "node scripts/prepareSchema.js && node prisma/seed.js",
     "db:studio": "prisma studio",
     "set:admin": "node scripts/setAdminCredentials.js"
   },

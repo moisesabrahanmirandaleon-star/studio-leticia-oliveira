@@ -51,21 +51,48 @@ export async function getStylistById(req, res) {
 export async function updateStylist(req, res) {
   try {
     const { id } = req.params;
-    const { name, bio, photoUrl, phone, active } = req.body;
+    const {
+      name,
+      bio,
+      photoUrl,
+      phone,
+      active,
+      address,
+      addressDetails,
+      instagram,
+      pixKey,
+      pixType,
+      cancellationNoticeHours,
+      cancellationFeePercent,
+      customPolicyText,
+      bufferMinutes
+    } = req.body;
+
+    const dataToUpdate = {};
+    if (name !== undefined) dataToUpdate.name = name.trim();
+    if (bio !== undefined) dataToUpdate.bio = bio?.trim();
+    if (photoUrl !== undefined) dataToUpdate.photoUrl = photoUrl?.trim();
+    if (phone !== undefined) dataToUpdate.phone = phone?.trim();
+    if (active !== undefined) dataToUpdate.active = Boolean(active);
+
+    if (address !== undefined) dataToUpdate.address = address?.trim();
+    if (addressDetails !== undefined) dataToUpdate.addressDetails = addressDetails?.trim();
+    if (instagram !== undefined) dataToUpdate.instagram = instagram?.trim();
+    if (pixKey !== undefined) dataToUpdate.pixKey = pixKey?.trim();
+    if (pixType !== undefined) dataToUpdate.pixType = pixType?.trim();
+    if (cancellationNoticeHours !== undefined) dataToUpdate.cancellationNoticeHours = Number(cancellationNoticeHours);
+    if (cancellationFeePercent !== undefined) dataToUpdate.cancellationFeePercent = Number(cancellationFeePercent);
+    if (customPolicyText !== undefined) dataToUpdate.customPolicyText = customPolicyText?.trim();
+    if (bufferMinutes !== undefined) dataToUpdate.bufferMinutes = Number(bufferMinutes);
 
     const updated = await prisma.stylist.update({
       where: { id: Number(id) },
-      data: {
-        ...(name && { name: name.trim() }),
-        ...(bio !== undefined && { bio: bio?.trim() }),
-        ...(photoUrl !== undefined && { photoUrl: photoUrl?.trim() }),
-        ...(phone !== undefined && { phone: phone?.trim() }),
-        ...(active !== undefined && { active: Boolean(active) })
-      }
+      data: dataToUpdate
     });
 
     return res.json(updated);
   } catch (error) {
+    console.error('Erro ao atualizar profissional:', error);
     return res.status(500).json({ error: 'Erro ao atualizar dados da profissional.' });
   }
 }
@@ -107,6 +134,27 @@ export async function createPortfolioItem(req, res) {
     return res.status(201).json(item);
   } catch (error) {
     return res.status(500).json({ error: 'Erro ao criar item de portfólio.' });
+  }
+}
+
+export async function updatePortfolioItem(req, res) {
+  try {
+    const { id } = req.params;
+    const { imageUrl, title, category, description } = req.body;
+
+    const updated = await prisma.portfolioItem.update({
+      where: { id: Number(id) },
+      data: {
+        ...(imageUrl !== undefined && { imageUrl: imageUrl.trim() }),
+        ...(title !== undefined && { title: title.trim() }),
+        ...(category !== undefined && { category: category.trim() }),
+        ...(description !== undefined && { description: description?.trim() || null })
+      }
+    });
+
+    return res.json(updated);
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao atualizar item do portfólio.' });
   }
 }
 

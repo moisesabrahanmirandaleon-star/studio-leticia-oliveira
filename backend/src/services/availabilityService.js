@@ -18,6 +18,75 @@ export function hasOverlap(startA, endA, startB, endB) {
 }
 
 /**
+ * Obtém as regras de atendimento efetivas para um profissional em uma data.
+ * Prioridade: DateSchedule específico > Schedule semanal padrão.
+ */
+export async function getEffectiveDaySchedule(stylistId, date) {
+  const [year, month, day] = date.split('-').map(Number);
+  const targetDate = new Date(year, month - 1, day);
+  const dayOfWeek = targetDate.getDay(); // 0 = Domingo ... 6 = Sábado
+
+  // 1. Verificar se existe escala / exceção de data específica
+  const dateSchedule = await prisma.dateSchedule.findUnique({
+    where: {
+      stylistId_date: {
+        stylistId: Number(stylistId),
+        date
+      }
+    }
+  });
+
+  // 2. Obter jornada padrão semanal
+  const defaultSchedule = await prisma.schedule.findUnique({
+    where: {
+      stylistId_dayOfWeek: {
+        stylistId: Number(stylistId),
+        dayOfWeek
+      }
+    }
+  });
+
+  // Se houver exceção para a data específica
+  if (dateSchedule) {
+    if (!dateSchedule.isOpen) {
+      return {
+        isOpen: false,
+        reason: dateSchedule.note || 'Profissional indisponível nesta data (escala obrigatória / folga).',
+        isOverride: true
+      };
+    }
+
+    return {
+      isOpen: true,
+      startTime: dateSchedule.startTime || defaultSchedule?.startTime || '09:00',
+      endTime: dateSchedule.endTime || defaultSchedule?.endTime || '19:00',
+      breakStart: dateSchedule.breakStart !== undefined ? dateSchedule.breakStart : defaultSchedule?.breakStart,
+      breakEnd: dateSchedule.breakEnd !== undefined ? dateSchedule.breakEnd : defaultSchedule?.breakEnd,
+      isOverride: true,
+      note: dateSchedule.note
+    };
+  }
+
+  // Se não houver exceção de data, usa o padrão semanal
+  if (!defaultSchedule || !defaultSchedule.isActive) {
+    return {
+      isOpen: false,
+      reason: 'A profissional não atende neste dia da semana.',
+      isOverride: false
+    };
+  }
+
+  return {
+    isOpen: true,
+    startTime: defaultSchedule.startTime,
+    endTime: defaultSchedule.endTime,
+    breakStart: defaultSchedule.breakStart,
+    breakEnd: defaultSchedule.breakEnd,
+    isOverride: false
+  };
+}
+
+/**
  * Calcula horários disponíveis para um estilista, serviço e data específica.
  */
 export async function getAvailableSlots({ stylistId, serviceId, date }) {
@@ -32,25 +101,21 @@ export async function getAvailableSlots({ stylistId, serviceId, date }) {
 
   const duration = service.durationMinutes;
 
-  // 2. Determinar dia da semana local sem desvio de fuso horário
-  const [year, month, day] = date.split('-').map(Number);
-  const targetDate = new Date(year, month - 1, day);
-  const dayOfWeek = targetDate.getDay(); // 0 = Domingo ... 6 = Sábado
-
-  // 3. Obter jornada do estilista para o dia
-  const schedule = await prisma.schedule.findUnique({
-    where: {
-      stylistId_dayOfWeek: {
-        stylistId: Number(stylistId),
-        dayOfWeek
-      }
-    }
+  // 2. Obter estilista (para checar tempo de intervalo/buffer entre atendimentos)
+  const stylist = await prisma.stylist.findUnique({
+    where: { id: Number(stylistId) },
+    select: { id: true, name: true, bufferMinutes: true }
   });
 
-  if (!schedule || !schedule.isActive) {
+  const bufferMinutes = stylist?.bufferMinutes || 0;
+
+  // 3. Obter jornada efetiva do dia
+  const effectiveSchedule = await getEffectiveDaySchedule(stylistId, date);
+
+  if (!effectiveSchedule.isOpen) {
     return {
       available: false,
-      reason: 'A profissional não atende neste dia da semana.',
+      reason: effectiveSchedule.reason || 'Data indisponível para agendamento.',
       slots: []
     };
   }
@@ -68,36 +133,36 @@ export async function getAvailableSlots({ stylistId, serviceId, date }) {
     }
   });
 
-  // Converter intervalos ocupados para minutos
+  // Converter intervalos ocupados para minutos, incluindo buffer
   const occupiedIntervals = existingAppointments.map((app) => ({
     start: timeToMinutes(app.startTime),
-    end: timeToMinutes(app.endTime)
+    // Adiciona o buffer de descanso/higienização após o agendamento
+    end: timeToMinutes(app.endTime) + bufferMinutes
   }));
 
-  const workStart = timeToMinutes(schedule.startTime);
-  const workEnd = timeToMinutes(schedule.endTime);
+  const workStart = timeToMinutes(effectiveSchedule.startTime);
+  const workEnd = timeToMinutes(effectiveSchedule.endTime);
 
-  const breakInterval = (schedule.breakStart && schedule.breakEnd)
+  const breakInterval = (effectiveSchedule.breakStart && effectiveSchedule.breakEnd)
     ? {
-        start: timeToMinutes(schedule.breakStart),
-        end: timeToMinutes(schedule.breakEnd)
+        start: timeToMinutes(effectiveSchedule.breakStart),
+        end: timeToMinutes(effectiveSchedule.breakEnd)
       }
     : null;
 
-  // 5. Configurar granularidade da grade
-  // Se for múltiplo de 15 minutos (ex: 30, 60), avança de 15 em 15.
-  // Se for serviço curto como 10 ou 20 minutos (ex: buço, epilação), avança de 10 em 10 para máxima flexibilidade.
+  // 5. Configurar granularidade da grade (15 min padrão, ou 10 min para serviços rápidos)
   const step = (duration % 15 === 0) ? 15 : 10;
 
   const slots = [];
 
   // Se a data for hoje, não exibir horários que já passaram
+  const [year, month, day] = date.split('-').map(Number);
   const now = new Date();
   const isToday =
     now.getFullYear() === year &&
     now.getMonth() === month - 1 &&
     now.getDate() === day;
-  const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() + 15 : -1; // margem de 15 min de antecedência
+  const currentMinutes = isToday ? now.getHours() * 60 + now.getMinutes() + 15 : -1;
 
   // 6. Percorrer a linha do tempo e verificar viabilidade de cada bloco
   for (let slotStart = workStart; slotStart + duration <= workEnd; slotStart += step) {
@@ -113,7 +178,7 @@ export async function getAvailableSlots({ stylistId, serviceId, date }) {
       continue;
     }
 
-    // Verificar se colide com agendamentos existentes
+    // Verificar se colide com agendamentos existentes (considerando o buffer)
     const collidesWithAppointment = occupiedIntervals.some((app) =>
       hasOverlap(slotStart, slotEnd, app.start, app.end)
     );
@@ -138,52 +203,49 @@ export async function getAvailableSlots({ stylistId, serviceId, date }) {
       price: service.price
     },
     workHours: {
-      start: schedule.startTime,
-      end: schedule.endTime,
-      breakStart: schedule.breakStart,
-      breakEnd: schedule.breakEnd
+      start: effectiveSchedule.startTime,
+      end: effectiveSchedule.endTime,
+      breakStart: effectiveSchedule.breakStart,
+      breakEnd: effectiveSchedule.breakEnd,
+      isOverride: effectiveSchedule.isOverride,
+      note: effectiveSchedule.note
     },
     slots
   };
 }
 
 /**
- * Validação rigorosa para criação/reagendamento de consulta (evita colisão e race-conditions)
+ * Validação rigorosa para criação/reagendamento de consulta
  */
 export async function validateSlotAvailability({ stylistId, date, startTime, durationMinutes, excludeAppointmentId = null }) {
-  const [year, month, day] = date.split('-').map(Number);
-  const targetDate = new Date(year, month - 1, day);
-  const dayOfWeek = targetDate.getDay();
+  const effectiveSchedule = await getEffectiveDaySchedule(stylistId, date);
 
-  const schedule = await prisma.schedule.findUnique({
-    where: {
-      stylistId_dayOfWeek: {
-        stylistId: Number(stylistId),
-        dayOfWeek
-      }
-    }
-  });
-
-  if (!schedule || !schedule.isActive) {
-    return { valid: false, message: 'Profissional não atende nesta data.' };
+  if (!effectiveSchedule.isOpen) {
+    return { valid: false, message: effectiveSchedule.reason || 'Profissional não atende nesta data.' };
   }
 
   const slotStart = timeToMinutes(startTime);
   const slotEnd = slotStart + Number(durationMinutes);
-  const workStart = timeToMinutes(schedule.startTime);
-  const workEnd = timeToMinutes(schedule.endTime);
+  const workStart = timeToMinutes(effectiveSchedule.startTime);
+  const workEnd = timeToMinutes(effectiveSchedule.endTime);
 
   if (slotStart < workStart || slotEnd > workEnd) {
-    return { valid: false, message: 'Horário fora do expediente de atendimento.' };
+    return { valid: false, message: 'Horário fora do expediente de atendimento da profissional.' };
   }
 
-  if (schedule.breakStart && schedule.breakEnd) {
-    const breakStart = timeToMinutes(schedule.breakStart);
-    const breakEnd = timeToMinutes(schedule.breakEnd);
+  if (effectiveSchedule.breakStart && effectiveSchedule.breakEnd) {
+    const breakStart = timeToMinutes(effectiveSchedule.breakStart);
+    const breakEnd = timeToMinutes(effectiveSchedule.breakEnd);
     if (hasOverlap(slotStart, slotEnd, breakStart, breakEnd)) {
-      return { valid: false, message: 'O horário selecionado coincide com o intervalo da profissional.' };
+      return { valid: false, message: 'O horário selecionado coincide com o intervalo de descanso da profissional.' };
     }
   }
+
+  const stylist = await prisma.stylist.findUnique({
+    where: { id: Number(stylistId) },
+    select: { bufferMinutes: true }
+  });
+  const bufferMinutes = stylist?.bufferMinutes || 0;
 
   const whereClause = {
     stylistId: Number(stylistId),
@@ -202,9 +264,9 @@ export async function validateSlotAvailability({ stylistId, date, startTime, dur
 
   for (const app of existing) {
     const appStart = timeToMinutes(app.startTime);
-    const appEnd = timeToMinutes(app.endTime);
+    const appEnd = timeToMinutes(app.endTime) + bufferMinutes;
     if (hasOverlap(slotStart, slotEnd, appStart, appEnd)) {
-      return { valid: false, message: 'Este horário já foi reservado por outra cliente.' };
+      return { valid: false, message: 'Este horário já foi reservado ou colide com outro atendimento.' };
     }
   }
 
@@ -212,4 +274,105 @@ export async function validateSlotAvailability({ stylistId, date, startTime, dur
     valid: true,
     endTime: minutesToTime(slotEnd)
   };
+}
+
+/**
+ * Retorna o resumo de disponibilidade de todos os dias de um mês específico
+ */
+export async function getMonthScheduleSummary({ stylistId, year, month }) {
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const monthStr = String(month).padStart(2, '0');
+
+  // Buscar todos os DateSchedule cadastrados para este mês
+  const dateSchedules = await prisma.dateSchedule.findMany({
+    where: {
+      stylistId: Number(stylistId),
+      date: {
+        startsWith: `${year}-${monthStr}-`
+      }
+    }
+  });
+
+  const dateMap = new Map();
+  dateSchedules.forEach((ds) => {
+    dateMap.set(ds.date, ds);
+  });
+
+  // Buscar agendamentos do mês para contar quantas clientes tem em cada dia
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      stylistId: Number(stylistId),
+      date: {
+        startsWith: `${year}-${monthStr}-`
+      },
+      status: { notIn: ['CANCELADO'] }
+    },
+    select: { date: true }
+  });
+
+  const appointmentCountMap = new Map();
+  appointments.forEach((app) => {
+    appointmentCountMap.set(app.date, (appointmentCountMap.get(app.date) || 0) + 1);
+  });
+
+  // Buscar horários semanais padrão
+  const weeklySchedules = await prisma.schedule.findMany({
+    where: { stylistId: Number(stylistId) }
+  });
+  const weeklyMap = new Map();
+  weeklySchedules.forEach((ws) => {
+    weeklyMap.set(ws.dayOfWeek, ws);
+  });
+
+  const days = [];
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayStr = String(day).padStart(2, '0');
+    const date = `${year}-${monthStr}-${dayStr}`;
+    const dateObj = new Date(year, month - 1, day);
+    const dayOfWeek = dateObj.getDay();
+
+    const override = dateMap.get(date);
+    const weekly = weeklyMap.get(dayOfWeek);
+
+    let isOpen = false;
+    let isOverride = false;
+    let startTime = null;
+    let endTime = null;
+    let breakStart = null;
+    let breakEnd = null;
+    let note = null;
+
+    if (override) {
+      isOverride = true;
+      isOpen = override.isOpen;
+      startTime = override.startTime || weekly?.startTime || '09:00';
+      endTime = override.endTime || weekly?.endTime || '19:00';
+      breakStart = override.breakStart || weekly?.breakStart || null;
+      breakEnd = override.breakEnd || weekly?.breakEnd || null;
+      note = override.note;
+    } else if (weekly && weekly.isActive) {
+      isOpen = true;
+      startTime = weekly.startTime;
+      endTime = weekly.endTime;
+      breakStart = weekly.breakStart;
+      breakEnd = weekly.breakEnd;
+    }
+
+    days.push({
+      date,
+      day,
+      dayOfWeek,
+      isOpen,
+      isOverride,
+      startTime,
+      endTime,
+      breakStart,
+      breakEnd,
+      note,
+      appointmentCount: appointmentCountMap.get(date) || 0
+    });
+  }
+
+  return days;
 }

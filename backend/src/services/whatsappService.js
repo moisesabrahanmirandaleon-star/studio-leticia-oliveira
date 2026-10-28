@@ -62,18 +62,21 @@ export class WhatsAppService {
    * Formata o aviso oficial de confirmação e política de negócio para a cliente
    * Mensagem padrão da Letícia Oliveira com localização detalhada e regras de cancelamento
    */
-  formatClientNoticeMessage({ date, startTime, clientName, serviceName }) {
+  formatClientNoticeMessage({ date, startTime, clientName, serviceName, stylist = null }) {
     const { dayMonthStr, weekdayStr } = this.formatDateAndWeekday(date);
+    const address = stylist?.address || 'Condomínio Altos da Theodomiro 2, 2435';
+    const addressDetails = stylist?.addressDetails || '2ª portaria (meu prédio é o último da rua, são dois condomínios no local)\n🏢 Bloco 6, Apê 652 – 5º andar';
+    const policyText = stylist?.customPolicyText || 'Cancelamentos ou remarcações devem ser realizados com 24h de antecedência.\n\nApós esse prazo, será cobrado 50% do valor do procedimento. Em caso de não comparecimento, o pagamento dos 50% também é obrigatório, referente ao horário reservado exclusivamente para você.';
+    const pixInfo = stylist?.pixKey ? `\n💳 Chave PIX: ${stylist.pixKey} (${stylist.pixType || 'Chave'})\n` : '';
 
     return (
       `Combinado! ${dayMonthStr}, ${weekdayStr}, às ${startTime} ✨\n\n` +
-      `📍 Condomínio Altos da Theodomiro 2, 2435\n` +
-      `➡️ 2ª portaria (meu prédio é o último da rua, são dois condomínios no local)\n` +
-      `🏢 Bloco 6, Apê 652 – 5º andar\n\n` +
-      `Já aviso que precisa de um pouquinho de fôlego pra subir 🤭 mas vai ser super bem recebida por mim lá em cima! 💖\n\n` +
-      `⏰ Política de agendamento\n` +
-      `Cancelamentos ou remarcações devem ser realizados com 24h de antecedência.\n\n` +
-      `Após esse prazo, será cobrado 50% do valor do procedimento. Em caso de não comparecimento, o pagamento dos 50% também é obrigatório, referente ao horário reservado exclusivamente para você.\n\n` +
+      `📍 ${address}\n` +
+      `➡️ ${addressDetails}\n\n` +
+      `Já aviso que precisa de um pouquinho de fôlego pra subir 🤭 mas vai ser super bem recebida por mim lá em cima! 💖\n` +
+      pixInfo +
+      `\n⏰ Política de agendamento\n` +
+      `${policyText}\n\n` +
       `✨ Essa política existe para que eu consiga organizar minha agenda e respeitar o horário de todas as clientes.\n\n` +
       `Qualquer dúvida, me chama! 💖`
     );

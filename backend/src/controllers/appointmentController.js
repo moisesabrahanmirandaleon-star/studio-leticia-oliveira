@@ -93,7 +93,8 @@ export async function createAppointment(req, res) {
       date: appointment.date,
       startTime: appointment.startTime,
       clientName: appointment.clientName,
-      serviceName: appointment.service.name
+      serviceName: appointment.service.name,
+      stylist
     });
 
     const clientWhatsAppUrl = whatsappService.generateClickToChatUrl(
@@ -264,5 +265,17 @@ export async function rescheduleAppointment(req, res) {
   } catch (error) {
     console.error('Erro ao reagendar:', error);
     return res.status(500).json({ error: 'Erro ao reagendar.' });
+  }
+}
+
+export async function deleteAppointment(req, res) {
+  try {
+    const { id } = req.params;
+    await prisma.appointment.delete({
+      where: { id: Number(id) }
+    });
+    return res.json({ message: 'Agendamento excluído com sucesso.' });
+  } catch (error) {
+    return res.status(500).json({ error: 'Erro ao excluir agendamento.' });
   }
 }

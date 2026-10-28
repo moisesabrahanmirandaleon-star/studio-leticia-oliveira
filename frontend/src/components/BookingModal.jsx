@@ -102,35 +102,65 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
     }
   }, [stylists, selectedStylist]);
 
-  // Gerar os próximos 14 dias para o seletor de datas
-  const generateDates = () => {
-    const dates = [];
-    const today = new Date();
-    const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const todayDate = new Date();
+  const [calendarYear, setCalendarYear] = useState(todayDate.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(todayDate.getMonth() + 1);
+  const [monthScheduleDays, setMonthScheduleDays] = useState([]);
+  const [loadingMonthSchedule, setLoadingMonthSchedule] = useState(false);
 
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-
-      // Formato YYYY-MM-DD local
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-
-      dates.push({
-        dateStr,
-        dayName: dayNames[d.getDay()],
-        dayNumber: d.getDate(),
-        monthName: monthNames[d.getMonth()],
-        isSunday: d.getDay() === 0
-      });
+  // Carregar escala mensal do estilista selecionado
+  useEffect(() => {
+    async function loadClientMonthSchedule() {
+      if (!selectedStylist) return;
+      setLoadingMonthSchedule(true);
+      try {
+        const res = await api.getMonthSchedule(selectedStylist.id, calendarYear, calendarMonth);
+        setMonthScheduleDays(res.days || []);
+      } catch (err) {
+        console.error('Erro ao carregar escala do mês para cliente:', err);
+      } finally {
+        setLoadingMonthSchedule(false);
+      }
     }
-    return dates;
+
+    if (isOpen && selectedStylist) {
+      loadClientMonthSchedule();
+    }
+  }, [isOpen, selectedStylist, calendarYear, calendarMonth]);
+
+  const handleClientPrevMonth = () => {
+    let y = calendarYear;
+    let m = calendarMonth - 1;
+    if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    const now = new Date();
+    if (y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1)) {
+      return;
+    }
+    setCalendarYear(y);
+    setCalendarMonth(m);
   };
 
-  const datesList = generateDates();
+  const handleClientNextMonth = () => {
+    let y = calendarYear;
+    let m = calendarMonth + 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+    setCalendarYear(y);
+    setCalendarMonth(m);
+  };
+
+  const getMonthName = (m) => {
+    const names = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+    return names[m - 1] || '';
+  };
 
   // Buscar slots disponíveis quando stylist, service e date estiverem definidos
   useEffect(() => {
@@ -360,50 +390,123 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
             </div>
           )}
 
-          {/* PASSO 3: Seleção de Data */}
+          {/* PASSO 3: Seleção de Data Conforme a Escala */}
           {step === 3 && (
             <div className="space-y-4">
-              <div>
-                <h4 className="font-serif text-lg font-bold text-stone-900">
-                  3. Escolha o dia
-                </h4>
-                <p className="text-xs text-stone-500">
-                  Atendimento de Segunda a Sábado. Domingos folga.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-serif text-lg font-bold text-stone-900">
+                    3. Escolha o dia
+                  </h4>
+                  <p className="text-xs text-stone-500">
+                    Selecione um dia disponível de acordo com a escala de atendimento da Letícia.
+                  </p>
+                </div>
+
+                {/* Navegação de Mês */}
+                <div className="flex items-center gap-1.5 self-start sm:self-auto bg-[#FAF6F4] px-2 py-1 rounded-xl border border-[#EBDCD5]">
+                  <button
+                    type="button"
+                    onClick={handleClientPrevMonth}
+                    className="p-1 rounded-lg hover:bg-white text-stone-700 transition-colors"
+                    title="Mês anterior"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs font-serif font-bold text-stone-900 px-2 min-w-28 text-center">
+                    {getMonthName(calendarMonth)} {calendarYear}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClientNextMonth}
+                    className="p-1 rounded-lg hover:bg-white text-stone-700 transition-colors"
+                    title="Próximo mês"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
-              {/* Grid horizontal de datas */}
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5">
-                {datesList.map((d) => {
-                  const isSelected = selectedDate === d.dateStr;
-                  const isUnavailable = d.isSunday;
-
-                  return (
-                    <button
-                      key={d.dateStr}
-                      disabled={isUnavailable}
-                      onClick={() => setSelectedDate(d.dateStr)}
-                      className={`p-3 rounded-2xl text-center border transition-all flex flex-col items-center justify-center ${
-                        isUnavailable
-                          ? 'opacity-40 bg-stone-100 border-stone-200 cursor-not-allowed'
-                          : isSelected
-                          ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-md ring-2 ring-[#B87F6C]/20'
-                          : 'bg-white hover:bg-[#FAF6F4] text-stone-800 border-[#EBDCD5]'
-                      }`}
-                    >
-                      <span className={`text-[11px] uppercase font-bold ${isSelected ? 'text-amber-200' : 'text-stone-500'}`}>
-                        {d.dayName}
-                      </span>
-                      <span className="text-lg font-serif font-bold my-0.5">
-                        {d.dayNumber}
-                      </span>
-                      <span className={`text-[10px] ${isSelected ? 'text-white' : 'text-stone-400'}`}>
-                        {d.monthName}
-                      </span>
-                    </button>
-                  );
-                })}
+              {/* Legenda simples */}
+              <div className="flex items-center gap-3 text-[11px] text-stone-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  Disponível para agendamento
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-stone-300" />
+                  Folga / Indisponível
+                </span>
               </div>
+
+              {/* Grade do Calendário Mensal */}
+              {loadingMonthSchedule ? (
+                <div className="py-12 text-center text-stone-400 text-xs">
+                  <div className="w-6 h-6 border-2 border-[#B87F6C] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  Consultando escala de {getMonthName(calendarMonth)}...
+                </div>
+              ) : (
+                <div>
+                  {/* Cabeçalho dias da semana */}
+                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-1">
+                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((lbl, idx) => (
+                      <div key={lbl} className={idx === 0 ? 'text-rose-400' : ''}>
+                        {lbl}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Dias do mês */}
+                  <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                    {/* Espaços em branco antes do primeiro dia */}
+                    {monthScheduleDays.length > 0 && Array.from({ length: monthScheduleDays[0].dayOfWeek }).map((_, i) => (
+                      <div key={`empty-client-${i}`} className="min-h-12 rounded-xl bg-stone-50/30" />
+                    ))}
+
+                    {monthScheduleDays.map((d) => {
+                      const isSelected = selectedDate === d.date;
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const isPast = d.date < todayStr;
+                      const isAvailable = d.isOpen && !isPast;
+
+                      return (
+                        <button
+                          key={d.date}
+                          type="button"
+                          disabled={!isAvailable}
+                          onClick={() => {
+                            setSelectedDate(d.date);
+                            setStep(4);
+                          }}
+                          className={`min-h-14 sm:min-h-16 p-1.5 rounded-2xl text-center border transition-all flex flex-col items-center justify-between relative group ${
+                            !isAvailable
+                              ? 'opacity-35 bg-stone-100 border-stone-200 cursor-not-allowed text-stone-400'
+                              : isSelected
+                              ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-md ring-2 ring-[#B87F6C]/20'
+                              : 'bg-emerald-50/50 hover:bg-emerald-100/60 border-emerald-200 text-stone-800 hover:scale-[1.02]'
+                          }`}
+                        >
+                          <span className={`text-[10px] uppercase font-bold ${
+                            isSelected ? 'text-amber-200' : isAvailable ? 'text-emerald-700' : 'text-stone-400'
+                          }`}>
+                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][d.dayOfWeek]}
+                          </span>
+
+                          <span className="text-base sm:text-lg font-serif font-bold my-0.5">
+                            {d.day}
+                          </span>
+
+                          <span className={`text-[9px] truncate max-w-full font-medium ${
+                            isSelected ? 'text-white' : isAvailable ? 'text-emerald-700' : 'text-stone-400'
+                          }`}>
+                            {isPast ? 'Passou' : d.isOpen ? 'Livre' : 'Folga'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -720,16 +823,21 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                       <MapPin className="w-4 h-4 text-[#B87F6C] shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-stone-900">
-                          Condomínio Altos da Theodomiro 2, 2435
+                          {selectedStylist?.address || 'Condomínio Altos da Theodomiro 2, 2435'}
                         </p>
-                        <p className="text-stone-600 text-[11px] mt-0.5">
-                          ➡️ 2ª portaria (meu prédio é o último da rua, são dois condomínios no local)
-                        </p>
-                        <p className="text-stone-600 text-[11px]">
-                          🏢 Bloco 6, Apê 652 – 5º andar
+                        <p className="text-stone-600 text-[11px] mt-0.5 whitespace-pre-line">
+                          {selectedStylist?.addressDetails || '➡️ 2ª portaria (meu prédio é o último da rua, são dois condomínios no local)\n🏢 Bloco 6, Apê 652 – 5º andar'}
                         </p>
                       </div>
                     </div>
+                    {selectedStylist?.pixKey && (
+                      <div className="mt-2 pt-2 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                        <span className="font-bold text-stone-700">Chave PIX:</span>
+                        <span className="font-mono bg-stone-50 px-2 py-0.5 rounded border border-stone-200 text-stone-900">
+                          {selectedStylist.pixKey} ({selectedStylist.pixType || 'Chave'})
+                        </span>
+                      </div>
+                    )}
                     <p className="text-[11px] text-[#A06654] font-medium pt-1 italic border-t border-stone-100">
                       Já aviso que precisa de um pouquinho de fôlego pra subir 🤭 mas vai ser super bem recebida por mim lá em cima! 💖
                     </p>

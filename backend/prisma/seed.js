@@ -9,6 +9,7 @@ async function main() {
   // 1. Limpar dados existentes em ordem de dependência
   await prisma.portfolioItem.deleteMany({});
   await prisma.appointment.deleteMany({});
+  await prisma.dateSchedule.deleteMany({});
   await prisma.schedule.deleteMany({});
   await prisma.stylistService.deleteMany({});
   await prisma.service.deleteMany({});
@@ -48,7 +49,16 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
       bio: leticiaBio,
       photoUrl: '/leticia-perfil.jpg',
       phone: '5551995037223',
-      active: true
+      active: true,
+      address: 'Condomínio Altos da Theodomiro 2, 2435',
+      addressDetails: '2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar',
+      instagram: '@leticia_r.oliveira',
+      pixKey: '5551995037223',
+      pixType: 'Telefone',
+      cancellationNoticeHours: 24,
+      cancellationFeePercent: 50,
+      customPolicyText: 'Cancelamentos ou remarcações devem ser realizados com 24h de antecedência. Após esse prazo ou em caso de não comparecimento, é cobrado 50% do valor do procedimento, referente ao horário reservado exclusivamente para você.',
+      bufferMinutes: 10
     }
   });
   console.log(`💄 Estilista criada: ${stylist.name}`);
