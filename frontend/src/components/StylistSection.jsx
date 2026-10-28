@@ -1,5 +1,6 @@
 import React from 'react';
 import { Award, Sparkles, CheckCircle, Heart, MessageCircle, ShieldCheck, Smile } from 'lucide-react';
+import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 
 export function StylistSection({ stylists }) {
   const defaultBio = `Prazer, sou a Letícia! ✨
@@ -43,7 +44,7 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
               <div className="relative inline-block group">
                 <div className="w-52 h-52 sm:w-64 sm:h-64 rounded-3xl overflow-hidden border-4 border-white shadow-2xl ring-4 ring-[#EBDCD5] transition-transform duration-300 group-hover:scale-[1.02]">
                   <img
-                    src={mainStylist.photoUrl || '/leticia-perfil.jpg'}
+                    src={(!mainStylist.photoUrl || mainStylist.photoUrl === '/leticia-perfil.jpg') ? leticiaPerfilPhoto : mainStylist.photoUrl}
                     alt={mainStylist.name}
                     className="w-full h-full object-cover"
                   />

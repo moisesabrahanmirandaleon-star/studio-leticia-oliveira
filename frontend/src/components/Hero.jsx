@@ -1,5 +1,6 @@
 import React from 'react';
 import { Calendar, MessageCircle, Star, Sparkles, CheckCircle2, Heart, ShieldCheck } from 'lucide-react';
+import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 
 export function Hero({ onOpenBooking }) {
   const whatsappUrl = "https://wa.me/5551995037223?text=Ol%C3%A1%2C%20Let%C3%ADcia!%20Li%20sua%20hist%C3%B3ria%20no%20site%20e%20gostaria%20de%20agendar%20um%20atendimento.";
@@ -92,7 +93,7 @@ export function Hero({ onOpenBooking }) {
 
               <div className="rounded-3xl overflow-hidden bg-white p-2.5 shadow-2xl border border-[#EBDCD5]">
                 <img
-                  src="/leticia-perfil.jpg"
+                  src={leticiaPerfilPhoto}
                   alt="Letícia Oliveira Designer de Sobrancelhas"
                   loading="eager"
                   decoding="async"

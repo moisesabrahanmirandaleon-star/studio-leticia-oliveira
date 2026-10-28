@@ -18,6 +18,7 @@ import {
   Check
 } from 'lucide-react';
 import { api } from '../services/api';
+import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 
 export function BookingModal({ isOpen, onClose, services, stylists, initialService }) {
   const [step, setStep] = useState(1);
@@ -366,7 +367,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                       }`}
                     >
                       <img
-                        src={stylist.photoUrl || '/leticia-perfil.jpg'}
+                        src={(!stylist.photoUrl || stylist.photoUrl === '/leticia-perfil.jpg') ? leticiaPerfilPhoto : stylist.photoUrl}
                         alt={stylist.name}
                         className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-md shrink-0"
                       />
