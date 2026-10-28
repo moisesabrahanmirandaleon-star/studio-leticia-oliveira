@@ -1,0 +1,54 @@
+{
+  "name": "Studio Letícia Oliveira | Cílios & Sobrancelhas",
+  "short_name": "Studio Letícia",
+  "description": "Aplicativo oficial do Studio Letícia Oliveira para agendamento online de cílios, sobrancelhas e micropigmentação.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF6F4",
+  "theme_color": "#B87F6C",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["beauty", "lifestyle", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agendar Horário",
+      "short_name": "Agendar",
+      "description": "Agendar um atendimento no Studio",
+      "url": "/?action=agendar",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Painel da Dona",
+      "short_name": "Painel",
+      "description": "Área de gestão do Studio",
+      "url": "/admin",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

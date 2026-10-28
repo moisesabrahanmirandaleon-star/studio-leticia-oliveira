@@ -91,7 +91,19 @@ export function Footer({ onOpenAdmin }) {
         </div>
 
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-4">
-          <p>© {new Date().getFullYear()} Studio Letícia Oliveira. Todos os direitos reservados.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <p>© {new Date().getFullYear()} Studio Letícia Oliveira. Todos os direitos reservados.</p>
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="text-stone-500 hover:text-stone-300 transition-colors flex items-center gap-1 text-[11px] cursor-pointer"
+                title="Acesso da Dona ao painel de gestão"
+              >
+                <Lock className="w-3 h-3 text-[#B87F6C]" />
+                <span>Área da Dona</span>
+              </button>
+            )}
+          </div>
           <p className="flex items-center gap-1">
             Feito com <Heart className="w-3.5 h-3.5 text-[#B87F6C] fill-[#B87F6C]" /> para valorizar sua autoestima.
           </p>

@@ -34,10 +34,12 @@ import {
   Search,
   Layers,
   Eye,
-  EyeOff
+  EyeOff,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
+import { AdminLoginView } from './AdminLoginView';
 
 export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const { user, token, isAuthenticated, login, logout } = useAuth();
@@ -705,6 +707,19 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
   if (!isOpen) return null;
 
+  if (!isAuthenticated) {
+    return (
+      <AdminLoginView
+        onBackToClient={onClose}
+        onSuccessLogin={() => {
+          loadAppointments();
+          loadMonthSchedule();
+          if (onRefreshServices) onRefreshServices();
+        }}
+      />
+    );
+  }
+
   const dayLabels = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
   const weekShortLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -744,119 +759,67 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col max-h-[96vh]">
-        
-        {/* Top Header */}
-        <div className="bg-[#FAF6F4] p-4 sm:p-5 border-b border-[#EBDCD5] flex items-center justify-between">
+    <div className="min-h-screen w-full bg-[#FAF6F4] text-stone-800 flex flex-col selection:bg-[#CCA08F] selection:text-white">
+      
+      {/* Top Header Barra Superior Fixa */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#EBDCD5] px-4 sm:px-6 py-3 shadow-xs">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#B87F6C] text-white flex items-center justify-center shadow-sm">
-              <Settings className="w-5 h-5 text-amber-200" />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#B87F6C] to-[#CCA08F] text-white flex items-center justify-center shadow-md">
+              <Sparkles className="w-5 h-5 text-amber-100" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-stone-900 text-lg leading-tight flex items-center gap-2">
-                Painel da Dona do Studio
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-[10px] font-sans font-bold">
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif font-bold text-stone-900 text-base sm:text-lg leading-tight">
+                  Painel da Dona
+                </h1>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-[#F5ECE8] text-[#7E4E40] text-[10px] font-sans font-bold">
                   Gestão Total
                 </span>
-              </h3>
+              </div>
               <span className="text-xs text-stone-500 font-medium">
-                {isAuthenticated ? `Bem-vinda, ${profName}` : 'Acesso Restrito'}
+                Studio Letícia Oliveira • {profName || 'Letícia Oliveira'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            {isAuthenticated && (
-              <button
-                onClick={logout}
-                className="p-2 rounded-xl text-stone-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                title="Sair do painel"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            )}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => {
+                loadAppointments();
+                loadMonthSchedule();
+              }}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+              title="Atualizar dados da agenda e escala"
+            >
+              <RefreshCw className="w-4 h-4 text-[#B87F6C]" />
+              <span className="hidden sm:inline">Atualizar</span>
+            </button>
+
             <button
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-stone-200 text-stone-500 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAF6F4] text-[#7E4E40] border border-[#DDBFB2] text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer"
+              title="Voltar para a página pública de clientes"
             >
-              <X className="w-5 h-5" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#B87F6C]" />
+              <span className="hidden sm:inline">Ver Site de Clientes</span>
+              <span className="sm:hidden">Ver Site</span>
+            </button>
+
+            <button
+              onClick={logout}
+              className="p-2 rounded-xl text-stone-500 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Sair do painel (Logout)"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Corpo principal */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          
-          {/* Tela de Login se não estiver autenticado */}
-          {!isAuthenticated ? (
-            <div className="max-w-md mx-auto py-10">
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 rounded-full bg-[#FAF6F4] border border-[#DDBFB2] text-[#B87F6C] flex items-center justify-center mx-auto mb-3 shadow-inner">
-                  <Lock className="w-7 h-7" />
-                </div>
-                <h4 className="font-serif text-2xl font-bold text-stone-900">
-                  Acesso Restrito da Dona
-                </h4>
-                <p className="text-xs text-stone-500 mt-1">
-                  Entre com seu e-mail e senha para gerenciar escala, agendamentos, fotos, preços e regras do Studio.
-                </p>
-              </div>
-
-              {loginError && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{loginError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleLoginSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    E-mail
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="seu-email@dominio.com"
-                    autoComplete="username"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#DDBFB2] text-sm outline-none focus:border-[#B87F6C]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    Senha
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    className="w-full px-4 py-2.5 rounded-xl border border-[#DDBFB2] text-sm outline-none focus:border-[#B87F6C]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loggingIn}
-                  className="w-full py-3 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  {loggingIn ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span>Entrar no Painel</span>
-                  )}
-                </button>
-              </form>
-            </div>
-          ) : (
-            /* SE ESTIVER LOGADO: DASHBOARD COMPLETO */
-            <div className="space-y-6">
+      {/* Conteúdo Principal Full Screen */}
+      <main className="max-w-7xl mx-auto w-full p-3 sm:p-6 flex-1 pb-28 md:pb-12">
+        <div className="space-y-6">
               
               {/* Cards de Métricas Rápidas */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -903,8 +866,60 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </div>
               </div>
 
-              {/* Barra de Abas */}
-              <div className="flex border-b border-[#EBDCD5] gap-1 sm:gap-4 overflow-x-auto pb-1">
+              {/* Seletor Rápido de Abas (Mobile) */}
+              <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+                <button
+                  onClick={() => setActiveTab('agenda')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'agenda' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Agenda
+                </button>
+                <button
+                  onClick={() => setActiveTab('escala')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'escala' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Escala Mensal
+                </button>
+                <button
+                  onClick={() => setActiveTab('servicos')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'servicos' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Serviços
+                </button>
+                <button
+                  onClick={() => setActiveTab('portfolio')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'portfolio' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Galeria
+                </button>
+                <button
+                  onClick={() => setActiveTab('horarios')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'horarios' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Horários
+                </button>
+                <button
+                  onClick={() => setActiveTab('configuracoes')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    activeTab === 'configuracoes' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  Perfil & Studio
+                </button>
+              </div>
+
+              {/* Barra de Abas (Desktop) */}
+              <div className="hidden md:flex border-b border-[#EBDCD5] gap-1 sm:gap-4 overflow-x-auto pb-1">
                 <button
                   onClick={() => setActiveTab('agenda')}
                   className={`pb-3 px-2 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 ${
@@ -2131,9 +2146,6 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
               )}
 
             </div>
-          )}
-
-        </div>
 
         {/* ========================================================= */}
         {/* MODAL: GERADOR DE ESCALA EM LOTE */}
@@ -2762,7 +2774,60 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           </div>
         )}
 
-      </div>
+        {/* Barra de Navegação Inferior Móvel Fixa (Estilo App Nativo para Celular) */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#EBDCD5] py-2 px-2 shadow-2xl flex items-center justify-around">
+          <button
+            onClick={() => setActiveTab('agenda')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'agenda' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <Calendar className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Agenda</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('escala')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'escala' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <Sparkles className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Escala</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('servicos')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'servicos' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <DollarSign className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Serviços</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('portfolio')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'portfolio' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <ImageIcon className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Fotos</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('configuracoes')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer ${
+              activeTab === 'configuracoes' || activeTab === 'horarios' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <Sliders className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Ajustes</span>
+          </button>
+        </nav>
+
+      </main>
     </div>
   );
 }
