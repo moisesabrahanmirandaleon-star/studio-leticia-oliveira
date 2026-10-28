@@ -9,10 +9,13 @@ const backendRoot = path.resolve(__dirname, '..');
 const envPath = path.resolve(backendRoot, '.env');
 const schemaPath = path.resolve(backendRoot, 'prisma', 'schema.prisma');
 
-dotenv.config({ path: envPath });
+// Carrega .env caso exista localmente (sem sobrescrever variáveis já fornecidas pelo ambiente da nuvem)
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+}
 
-const databaseUrl = process.env.DATABASE_URL || 'file:./dev.db';
-const isPostgres = databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://');
+const rawUrl = (process.env.DATABASE_URL || '').trim();
+const isPostgres = rawUrl.startsWith('postgres://') || rawUrl.startsWith('postgresql://');
 const targetProvider = isPostgres ? 'postgresql' : 'sqlite';
 
 if (fs.existsSync(schemaPath)) {
@@ -20,7 +23,6 @@ if (fs.existsSync(schemaPath)) {
   let modified = false;
 
   if (targetProvider === 'sqlite') {
-    // Garantir provider = "sqlite" e remover directUrl
     const sqliteDatasource = `datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
@@ -35,7 +37,7 @@ if (fs.existsSync(schemaPath)) {
     }
   } else {
     // Garantir provider = "postgresql" e directUrl (apenas se DIRECT_URL existir)
-    const hasDirectUrl = Boolean(process.env.DIRECT_URL);
+    const hasDirectUrl = Boolean(process.env.DIRECT_URL && process.env.DIRECT_URL.trim());
     const postgresDatasource = hasDirectUrl
       ? `datasource db {
   provider  = "postgresql"
