@@ -1,15 +1,13 @@
 import React from 'react';
 import { Calendar, MessageCircle, Star, Sparkles, CheckCircle2, Heart, ShieldCheck } from 'lucide-react';
 import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
+import { formatPhoneDisplay, buildWhatsAppUrl } from '../utils/phoneUtils';
 
 export function Hero({ onOpenBooking, stylist }) {
   const currentStylist = stylist || {};
   const rawPhone = currentStylist.phone || '5551995037223';
-  const cleanPhone = rawPhone.replace(/\D/g, '');
-  const displayPhone = cleanPhone.length === 13 && cleanPhone.startsWith('55')
-    ? `(${cleanPhone.slice(2, 4)}) ${cleanPhone.slice(4, 9)}-${cleanPhone.slice(9)}`
-    : (cleanPhone.length === 11 ? `(${cleanPhone.slice(0, 2)}) ${cleanPhone.slice(2, 7)}-${cleanPhone.slice(7)}` : '(51) 99503-7223');
-  const whatsappUrl = `https://wa.me/${cleanPhone || '5551995037223'}?text=${encodeURIComponent("Olá Letícia! Vi sua apresentação no site e gostaria de agendar um atendimento.")}`;
+  const displayPhone = formatPhoneDisplay(rawPhone) || '(51) 99503-7223';
+  const whatsappUrl = buildWhatsAppUrl(rawPhone, "Olá Letícia! Vi sua apresentação no site e gostaria de agendar um atendimento.");
 
   const rawInstagram = currentStylist.instagram || '@leticia_studiosobrancelhas';
   const cleanInstagramHandle = rawInstagram.replace(/^@/, '').trim() || 'leticia_studiosobrancelhas';

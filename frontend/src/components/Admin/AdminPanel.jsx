@@ -49,6 +49,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { AdminLoginView } from './AdminLoginView';
 import { ImageUploader } from '../ImageUploader';
+import { formatBrazilianPhoneInput, formatPhoneDisplay, buildWhatsAppUrl } from '../../utils/phoneUtils';
+import { urlBase64ToUint8Array } from '../../utils/pushUtils';
 
 export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const { user, token, isAuthenticated, login, logout } = useAuth();
@@ -189,7 +191,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [profCustomPolicy, setProfCustomPolicy] = useState('');
   const [profBufferMinutes, setProfBufferMinutes] = useState('0');
 
-  // --- SISTEMA DE NOTIFICAÇÕES EM TEMPO REAL DA DONA (SOM, PUSH & DRAWER) ---
+  // --- SISTEMA DE NOTIFICAÇÕES EM TEMPO REAL DA DONA (SOM, VIBRAÇÃO, WEB PUSH & DRAWER) ---
   const [soundNotificationsEnabled, setSoundNotificationsEnabled] = useState(() => {
     return localStorage.getItem('studio_sound_notif') !== 'false';
   });
@@ -202,13 +204,33 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [activeToastNotification, setActiveToastNotification] = useState(null);
   const knownAppointmentIdsRef = useRef(new Set());
   const knownBonusIdsRef = useRef(new Set());
+  const audioContextRef = useRef(null);
 
-  // Sintetizador harmônico com Web Audio API (som de sino delicado de estética)
-  const playNotificationChime = () => {
+  // Desbloqueio e inicialização do contexto de áudio para dispositivos móveis (Android / iOS)
+  const getAudioContext = () => {
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      if (!AudioCtx) return null;
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioCtx();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
+      return audioContextRef.current;
+    } catch {
+      return null;
+    }
+  };
+
+  // Sintetizador harmônico com Web Audio API (som de sino cristalino de estética)
+  const playNotificationChime = async () => {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') {
+        await ctx.resume().catch(() => {});
+      }
       const now = ctx.currentTime;
 
       // Nota 1: Sol 5 (784Hz)
@@ -216,7 +238,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(784, now);
-      gain1.gain.setValueAtTime(0.22, now);
+      gain1.gain.setValueAtTime(0.28, now);
       gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
@@ -228,7 +250,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(1046.5, now + 0.12);
-      gain2.gain.setValueAtTime(0.25, now + 0.12);
+      gain2.gain.setValueAtTime(0.32, now + 0.12);
       gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
@@ -240,7 +262,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       const gain3 = ctx.createGain();
       osc3.type = 'sine';
       osc3.frequency.setValueAtTime(1318.5, now + 0.24);
-      gain3.gain.setValueAtTime(0.28, now + 0.24);
+      gain3.gain.setValueAtTime(0.35, now + 0.24);
       gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
       osc3.connect(gain3);
       gain3.connect(ctx.destination);
@@ -258,18 +280,93 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     if (next) playNotificationChime();
   };
 
+  // Disparador de Notificação Nativa 100% compatível com Celular Android (via Service Worker) e Desktop
+  const dispatchNativeNotification = async (title, options = {}) => {
+    // 1. Vibração física imediata (compatível com 100% dos celulares Android)
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([300, 100, 300, 100, 400]);
+      } catch (e) {}
+    }
+
+    // 2. Disparo obrigatório via Service Worker no Android Chrome
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if (reg && reg.showNotification) {
+          await reg.showNotification(title, {
+            icon: '/favicon.svg',
+            badge: '/favicon.svg',
+            vibrate: [300, 100, 300, 100, 400],
+            renotify: true,
+            requireInteraction: true,
+            tag: options.tag || `studio-${Date.now()}`,
+            data: { url: options.url || '/' },
+            ...options
+          });
+          return true;
+        }
+      } catch (err) {
+        console.warn('Aviso no showNotification do Service Worker:', err);
+      }
+    }
+
+    // 3. Fallback clássico para navegadores Desktop (PC)
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          icon: '/favicon.svg',
+          ...options
+        });
+        return true;
+      } catch (err) {
+        console.warn('Aviso no fallback de Notification Desktop:', err);
+      }
+    }
+
+    return false;
+  };
+
+  // Inscreve o navegador / celular no Web Push do servidor
+  const subscribeDeviceToWebPush = async () => {
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      const res = await api.getVapidPublicKey().catch(() => ({}));
+      if (!res.publicKey) return;
+
+      const applicationServerKey = urlBase64ToUint8Array(res.publicKey);
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      }
+      if (sub) {
+        await api.subscribeToPush(sub.toJSON());
+        console.log('✅ [Push] Celular registrado no Web Push da nuvem!');
+      }
+    } catch (err) {
+      console.warn('Aviso ao registrar Web Push:', err.message);
+    }
+  };
+
   const requestBrowserNotificationPermission = async () => {
     if (!('Notification' in window)) {
-      alert('Seu navegador não suporta notificações na área de trabalho/celular.');
+      alert('Seu navegador não suporta notificações nativas.');
       return;
     }
     try {
       const perm = await Notification.requestPermission();
       setBrowserNotificationsPermission(perm);
       if (perm === 'granted') {
-        new Notification('✨ Studio Letícia Oliveira', {
-          body: 'Notificações ativadas! Você receberá avisos automáticos a cada novo agendamento.',
-          icon: '/pwa-192x192.png'
+        await subscribeDeviceToWebPush();
+        await dispatchNativeNotification('✨ Studio Letícia Oliveira', {
+          body: 'Notificações ativadas! Você receberá alertas sonoros e no celular a cada agendamento.',
+          tag: 'perm-granted'
         });
         playNotificationChime();
       }
@@ -278,14 +375,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     }
   };
 
-  const testNotification = () => {
+  // Testar som, vibração, push nativo no celular e toast visual
+  const testNotification = async () => {
+    // 1. Toca o sino no alto-falante
     playNotificationChime();
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('✨ Teste de Notificação - Studio Letícia', {
-        body: 'O som e o alerta em tempo real estão funcionando perfeitamente no seu dispositivo!',
-        icon: '/pwa-192x192.png'
-      });
-    }
+
+    // 2. Vibra o celular e exibe a notificação no Android / PC
+    await dispatchNativeNotification('✨ Teste de Notificação - Studio Letícia', {
+      body: 'O som, a vibração no celular e o alerta em tempo real estão 100% funcionando!',
+      tag: 'test-notification'
+    });
+
+    // 3. Disparar teste de Push do servidor
+    api.testPushNotification().catch(() => {});
+
+    // 4. Toast flutuante imediato na tela
     setActiveToastNotification({
       id: Date.now(),
       clientName: 'Cliente Exemplo (Teste)',
@@ -294,6 +398,19 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       startTime: '14:30',
       clientPhone: '5551995037223'
     });
+
+    // 5. Adicionar à fila de notificações
+    const testItem = {
+      id: Date.now(),
+      title: 'Teste de Alerta Concluído',
+      clientName: 'Alerta Teste do Sistema',
+      phone: '5551995037223',
+      details: 'Sino, vibração e banner testados com sucesso.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isNew: true
+    };
+    setLiveNotifications(prev => [testItem, ...prev]);
+    setUnreadNotificationsCount(prev => prev + 1);
   };
 
   // Auxiliares visuais
@@ -333,14 +450,103 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     }
   }, [isAuthenticated, token, selectedDateFilter, stylistId]);
 
-  // Polling em tempo real a cada 20 segundos para detectar novos agendamentos e bônus
+  // 1. Canal em tempo real instantâneo (Server-Sent Events)
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+
+    let eventSource = null;
+    try {
+      const streamUrl = api.getAppointmentStreamUrl(token);
+      eventSource = new EventSource(streamUrl);
+
+      eventSource.onmessage = async (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === 'NEW_APPOINTMENT' && payload.appointment) {
+            const app = payload.appointment;
+            const cleanDt = app.date ? String(app.date).split('T')[0].split('-').reverse().join('/') : '';
+
+            // Tocar aviso sonoro
+            if (soundNotificationsEnabled) {
+              playNotificationChime();
+            }
+
+            // Notificação Nativa (Vibra celular + push no Android/PC)
+            await dispatchNativeNotification(`✨ Novo Agendamento: ${app.clientName}`, {
+              body: `${app.service?.name || 'Procedimento'} em ${cleanDt} às ${app.startTime}`,
+              tag: `app-${app.id}`
+            });
+
+            // Adicionar ao topo da fila de notificações
+            const newItem = {
+              id: app.id,
+              title: 'Novo Agendamento Confirmado',
+              clientName: app.clientName,
+              phone: app.clientPhone,
+              details: `${app.service?.name || 'Procedimento'} • ${cleanDt} às ${app.startTime}`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isNew: true
+            };
+            setLiveNotifications(prev => [newItem, ...prev.filter(x => x.id !== app.id)].slice(0, 30));
+            setUnreadNotificationsCount(prev => prev + 1);
+
+            // Toast flutuante na tela
+            setActiveToastNotification({
+              id: app.id,
+              clientName: app.clientName,
+              serviceName: app.service?.name || 'Procedimento',
+              date: cleanDt,
+              startTime: app.startTime,
+              clientPhone: app.clientPhone
+            });
+
+            // Recarregar lista para atualizar tabela e métricas
+            loadAppointments(true);
+          } else if (payload.type === 'NEW_BONUS' && payload.application) {
+            const b = payload.application;
+            if (soundNotificationsEnabled) {
+              playNotificationChime();
+            }
+            await dispatchNativeNotification(`🎁 Novo Bônus Solicitado: ${b.clientName}`, {
+              body: `Campanha: ${b.campaign?.title || 'Bônus'} (${formatPhoneDisplay(b.clientPhone)})`,
+              tag: `bonus-${b.id}`
+            });
+            loadBonusData(true);
+          }
+        } catch (e) {}
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+      };
+    } catch (e) {}
+
+    return () => {
+      eventSource?.close();
+    };
+  }, [isAuthenticated, token, soundNotificationsEnabled]);
+
+  // 2. Polling secundário a cada 12 segundos + wake-up quando o usuário desbloqueia o celular
   useEffect(() => {
     if (!isAuthenticated || !token || !stylistId) return;
+
     const interval = setInterval(() => {
       loadAppointments(true);
       loadBonusData(true);
-    }, 20000);
-    return () => clearInterval(interval);
+    }, 12000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAppointments(true);
+        loadBonusData(true);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [isAuthenticated, token, selectedDateFilter, stylistId, soundNotificationsEnabled]);
 
   const loadAppointments = async (isBackgroundPoll = false) => {
@@ -349,37 +555,32 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       const filters = {};
       if (selectedDateFilter) filters.date = selectedDateFilter;
       const data = await api.getAppointments(filters, token);
-      
-      // Detectar agendamentos recém-chegados
+
       if (Array.isArray(data)) {
+        // Detectar agendamentos recém-chegados comparando com o Set de conhecidos
         if (knownAppointmentIdsRef.current.size > 0) {
           const newlyAdded = data.filter(a => !knownAppointmentIdsRef.current.has(a.id));
           if (newlyAdded.length > 0) {
-            // Tocar aviso sonoro se ativado
             if (soundNotificationsEnabled) {
               playNotificationChime();
             }
 
-            // Notificação de Sistema / Push
             const latest = newlyAdded[0];
             const cleanDt = latest.date ? String(latest.date).split('T')[0].split('-').reverse().join('/') : '';
-            if ('Notification' in window && Notification.permission === 'granted') {
-              try {
-                new Notification(`✨ Novo Agendamento: ${latest.clientName}`, {
-                  body: `${latest.service?.name || 'Procedimento'} em ${cleanDt} às ${latest.startTime}`,
-                  icon: '/pwa-192x192.png'
-                });
-              } catch (e) {}
-            }
 
-            // Adicionar à central de notificações
+            dispatchNativeNotification(`✨ Novo Agendamento: ${latest.clientName}`, {
+              body: `${latest.service?.name || 'Procedimento'} em ${cleanDt} às ${latest.startTime}`,
+              tag: `app-${latest.id}`
+            });
+
             const newNotifs = newlyAdded.map(a => ({
               id: a.id,
               title: 'Novo Agendamento Confirmado',
               clientName: a.clientName,
               phone: a.clientPhone,
               details: `${a.service?.name || 'Procedimento'} • ${a.date ? String(a.date).split('T')[0].split('-').reverse().join('/') : ''} às ${a.startTime}`,
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isNew: true
             }));
 
             setLiveNotifications(prev => [...newNotifs, ...prev].slice(0, 30));
@@ -395,7 +596,22 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           }
         }
 
-        // Armazenar IDs conhecidos
+        // Se a central de notificações estiver vazia, pré-preenche com os últimos agendamentos do banco
+        setLiveNotifications(prev => {
+          if (prev.length > 0) return prev;
+          const initialQueue = data.slice(0, 10).map(a => ({
+            id: a.id,
+            title: 'Agendamento no Sistema',
+            clientName: a.clientName,
+            phone: a.clientPhone,
+            details: `${a.service?.name || 'Procedimento'} • ${a.date ? String(a.date).split('T')[0].split('-').reverse().join('/') : ''} às ${a.startTime}`,
+            time: a.date ? String(a.date).split('T')[0].split('-').reverse().join('/') : '',
+            isNew: false
+          }));
+          return initialQueue;
+        });
+
+        // Registrar IDs conhecidos
         data.forEach(a => knownAppointmentIdsRef.current.add(a.id));
       }
 
@@ -620,7 +836,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     try {
       await api.createAppointment({
         clientName: newAppClientName.trim(),
-        clientPhone: newAppClientPhone.trim(),
+        clientPhone: formatPhoneDisplay(newAppClientPhone),
         stylistId,
         serviceId: Number(newAppServiceId),
         date: newAppDate,
@@ -1144,7 +1360,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     const title = encodeURIComponent(`✨ Studio Letícia: ${app.service?.name} - ${app.clientName}`);
     const details = encodeURIComponent(
       `Cliente: ${app.clientName}\n` +
-      `WhatsApp: ${app.clientPhone}\n` +
+      `WhatsApp: ${formatPhoneDisplay(app.clientPhone)}\n` +
       `Procedimento: ${app.service?.name} (${app.service?.durationMinutes} min)\n` +
       `Valor: R$ ${app.service?.price?.toFixed(2)}\n\n` +
       `📍 Endereço: ${profAddress || 'Condomínio Altos da Theodomiro 2, 2435, Bloco 6, Apê 652'}\n\n` +
@@ -1318,7 +1534,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <a
-                  href={`https://wa.me/${String(activeToastNotification.clientPhone).replace(/\D/g, '')}`}
+                  href={buildWhatsAppUrl(activeToastNotification.clientPhone)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
@@ -1398,7 +1614,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   onClick={requestBrowserNotificationPermission}
                   className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold border border-stone-300 cursor-pointer"
                 >
-                  {browserNotificationsPermission === 'granted' ? 'Permitido ✅' : 'Ativar Push 📱'}
+                  {browserNotificationsPermission === 'granted' ? 'Permitido ✅ (Reconectar)' : 'Ativar Push 📱'}
                 </button>
               </div>
             </div>
@@ -1417,12 +1633,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 liveNotifications.map((notif) => (
                   <div
                     key={notif.id}
-                    className="p-3.5 rounded-2xl border border-[#EBDCD5] bg-[#FAF6F4]/60 hover:bg-[#FAF6F4] transition-all space-y-1.5 shadow-2xs"
+                    className={`p-3.5 rounded-2xl border transition-all space-y-1.5 shadow-2xs ${
+                      notif.isNew
+                        ? 'border-emerald-300 bg-emerald-50/70 ring-1 ring-emerald-300'
+                        : 'border-[#EBDCD5] bg-[#FAF6F4]/60 hover:bg-[#FAF6F4]'
+                    }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#B87F6C] flex items-center gap-1">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                         {notif.title}
+                        {notif.isNew && (
+                          <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wider animate-pulse">
+                            Novo!
+                          </span>
+                        )}
                       </span>
                       <span className="text-[10px] text-stone-400 font-mono">{notif.time}</span>
                     </div>
@@ -1431,7 +1656,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     {notif.phone && (
                       <div className="pt-1 flex items-center gap-2">
                         <a
-                          href={`https://wa.me/${String(notif.phone).replace(/\D/g, '')}`}
+                          href={buildWhatsAppUrl(notif.phone)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 shadow-2xs cursor-pointer"
@@ -1447,15 +1672,18 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
             </div>
 
             {/* Botão de Teste */}
-            <div className="border-t border-[#EBDCD5] pt-3 mt-auto">
+            <div className="border-t border-[#EBDCD5] pt-3 mt-auto space-y-1">
               <button
                 type="button"
                 onClick={testNotification}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-[#FAF6F4] border border-[#DDBFB2] text-stone-800 text-xs font-bold transition-all shadow-xs cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold transition-all shadow-md cursor-pointer active:scale-[0.98]"
               >
-                <Volume2 className="w-4 h-4 text-[#B87F6C]" />
-                <span>🔊 Testar Som e Alerta Agora</span>
+                <Volume2 className="w-4 h-4 text-white" />
+                <span>🔊 📡 Testar Som, Vibração e Alerta Agora</span>
               </button>
+              <span className="text-[10px] text-stone-400 text-center block">
+                Toca o sino, vibra o celular e dispara a notificação no Android.
+              </span>
             </div>
           </div>
         </div>
@@ -1756,7 +1984,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     <div className="space-y-3">
                       {filteredAppointments.map((app) => {
                         const noticeMsg = formatNoticeMessage(app);
-                        const waUrl = `https://wa.me/${app.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(noticeMsg)}`;
+                        const waUrl = buildWhatsAppUrl(app.clientPhone, noticeMsg);
                         const gCalUrl = getGoogleCalendarUrl(app);
 
                         return (
@@ -1805,7 +2033,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                     </span>
                                     <span className="flex items-center gap-1 text-stone-600">
                                       <Phone className="w-3.5 h-3.5 text-stone-400" />
-                                      {app.clientPhone}
+                                      {formatPhoneDisplay(app.clientPhone)}
                                     </span>
                                   </div>
 
@@ -2399,9 +2627,9 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                     </p>
                                     <p className="flex items-center gap-2">
                                       <Phone className="w-3.5 h-3.5 text-[#B87F6C]" />
-                                      <span>{app.clientPhone}</span>
+                                      <span>{formatPhoneDisplay(app.clientPhone)}</span>
                                       <a
-                                        href={`https://wa.me/55${app.clientPhone.replace(/\D/g, '')}`}
+                                        href={buildWhatsAppUrl(app.clientPhone)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-emerald-700 hover:text-emerald-800 text-[11px] font-bold ml-1 inline-flex items-center gap-0.5"
@@ -2457,9 +2685,10 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                         </button>
 
                                         <a
-                                          href={`https://wa.me/55${app.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                          href={buildWhatsAppUrl(
+                                            app.clientPhone,
                                             `Olá ${app.clientName}! 💖\nSeu bônus *${app.campaign?.title}* está LIBERADO no Studio Letícia Oliveira!\n✨ Código: ${app.code}\nApresente no seu atendimento!`
-                                          )}`}
+                                          )}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1"
@@ -3918,7 +4147,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   Recusar Solicitação de Bônus
                 </h5>
                 <p className="text-xs text-stone-500 mt-1">
-                  Cliente: <strong>{noteModalApp.clientName}</strong> ({noteModalApp.clientPhone})
+                  Cliente: <strong>{noteModalApp.clientName}</strong> ({formatPhoneDisplay(noteModalApp.clientPhone)})
                 </p>
               </div>
 
@@ -4419,16 +4648,26 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                 <div>
                   <label className="block font-bold text-stone-700 uppercase mb-1">
-                    WhatsApp da Cliente *
+                    WhatsApp da Cliente (Brasil) *
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={newAppClientPhone}
-                    onChange={(e) => setNewAppClientPhone(e.target.value)}
-                    placeholder="Ex: 51999998888"
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  />
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 flex items-center gap-1.5 pointer-events-none select-none text-xs font-bold text-stone-700">
+                      <span className="text-sm">🇧🇷</span>
+                      <span>+55</span>
+                      <span className="text-stone-300">|</span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={newAppClientPhone}
+                      onChange={(e) => setNewAppClientPhone(formatBrazilianPhoneInput(e.target.value))}
+                      placeholder="(51) 98047-0713"
+                      className="w-full pl-20 pr-3 py-2 rounded-xl border border-[#DDBFB2]"
+                    />
+                  </div>
+                  <span className="text-[10px] text-stone-500 block mt-1">
+                    Padrão Brasil (+55). Insira DDD e número da cliente.
+                  </span>
                 </div>
 
                 <div>

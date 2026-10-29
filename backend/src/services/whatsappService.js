@@ -3,6 +3,12 @@
  * Suporta múltiplos provedores: LOG (desenvolvimento), META_CLOUD, Z_API, TWILIO
  */
 
+import {
+  normalizeToBrazilianWhatsapp,
+  formatPhoneDisplay,
+  buildWhatsAppClickToChatUrl
+} from '../utils/phoneUtils.js';
+
 export class WhatsAppService {
   constructor() {
     this.provider = (process.env.WHATSAPP_PROVIDER || 'LOG').toUpperCase();
@@ -88,6 +94,7 @@ export class WhatsAppService {
   formatNewAppointmentMessage({ clientName, serviceName, durationMinutes, date, startTime, clientPhone, paymentMethod }) {
     const { fullDateStr, weekdayStr } = this.formatDateAndWeekday(date);
     const paymentLabel = paymentMethod === 'ONLINE' ? 'Pagamento Online (Cartão/Pix)' : 'Pagar no Local';
+    const displayPhone = formatPhoneDisplay(clientPhone);
     const calendarLink = this.generateGoogleCalendarUrl({ clientName, serviceName, durationMinutes, date, startTime, clientPhone });
 
     return (
@@ -95,7 +102,7 @@ export class WhatsAppService {
       `👤 *Cliente:* ${clientName}\n` +
       `💆‍♀️ *Serviço:* ${serviceName} (${durationMinutes} min)\n` +
       `📅 *Data:* ${fullDateStr} (${weekdayStr}) às ${startTime}\n` +
-      `📱 *WhatsApp do cliente:* ${clientPhone}\n` +
+      `📱 *WhatsApp do cliente:* ${displayPhone}\n` +
       `💳 *Pagamento:* ${paymentLabel}\n\n` +
       `📍 *Endereço:* Condomínio Altos da Theodomiro 2, 2435, Bloco 6, Apê 652 (2ª portaria)\n\n` +
       `⏰ *Adicionar à sua Agenda Google (Alerta no Android):*\n${calendarLink}\n\n` +
@@ -118,10 +125,11 @@ export class WhatsAppService {
     const startIso = `${cleanDate}T${String(startH).padStart(2, '0')}${String(startM).padStart(2, '0')}00`;
     const endIso = `${cleanDate}T${endH}${endM}00`;
 
+    const displayPhone = formatPhoneDisplay(clientPhone);
     const title = encodeURIComponent(`✨ Studio Letícia: ${serviceName} - ${clientName}`);
     const details = encodeURIComponent(
       `Cliente: ${clientName}\n` +
-      `WhatsApp: ${clientPhone}\n` +
+      `WhatsApp: ${displayPhone}\n` +
       `Procedimento: ${serviceName} (${durationMinutes} min)\n\n` +
       `📍 Endereço: Condomínio Altos da Theodomiro 2, 2435\n` +
       `➡️ 2ª portaria (meu prédio é o último da rua, são dois condomínios no local)\n` +
@@ -134,12 +142,10 @@ export class WhatsAppService {
   }
 
   /**
-   * Gera o link direto de wa.me para abrir no WhatsApp com o texto pronto
+   * Gera o link direto de wa.me para abrir no WhatsApp com o texto pronto (garantindo DDI +55 Brasil)
    */
   generateClickToChatUrl(phone, message) {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const encoded = encodeURIComponent(message);
-    return `https://wa.me/${cleanPhone}?text=${encoded}`;
+    return buildWhatsAppClickToChatUrl(phone, message);
   }
 
   /**
@@ -180,7 +186,7 @@ export class WhatsAppService {
 
   async sendMetaCloud(phone, message) {
     try {
-      const cleanPhone = phone.replace(/\D/g, '');
+      const cleanPhone = normalizeToBrazilianWhatsapp(phone);
       const response = await fetch(`https://graph.facebook.com/v18.0/${this.phoneNumberId}/messages`, {
         method: 'POST',
         headers: {
@@ -204,7 +210,7 @@ export class WhatsAppService {
 
   async sendZApi(phone, message) {
     try {
-      const cleanPhone = phone.replace(/\D/g, '');
+      const cleanPhone = normalizeToBrazilianWhatsapp(phone);
       const response = await fetch(`https://api.z-api.io/instances/${this.phoneNumberId}/token/${this.apiToken}/send-text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

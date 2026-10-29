@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
+import { formatBrazilianPhoneInput, formatPhoneDisplay, buildWhatsAppUrl } from '../utils/phoneUtils';
 
 export function BookingModal({ isOpen, onClose, services, stylists, initialService }) {
   const [step, setStep] = useState(1);
@@ -211,8 +212,8 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
     setIsSubmitting(true);
     try {
       const res = await api.createAppointment({
-        clientName,
-        clientPhone,
+        clientName: clientName.trim(),
+        clientPhone: formatPhoneDisplay(clientPhone),
         clientEmail: clientEmail || undefined,
         stylistId: selectedStylist.id,
         serviceId: selectedService.id,
@@ -622,20 +623,24 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
 
                 <div>
                   <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1">
-                    WhatsApp (com DDD) *
+                    WhatsApp (Brasil) *
                   </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 flex items-center gap-1.5 pointer-events-none select-none">
+                      <span className="text-sm">🇧🇷</span>
+                      <span className="text-xs font-bold text-stone-700">+55</span>
+                      <span className="text-stone-300">|</span>
+                    </div>
                     <input
                       type="tel"
-                      placeholder="Ex: (51) 99503-7223"
+                      placeholder="(51) 98047-0713"
                       value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#DDBFB2] focus:border-[#B87F6C] focus:ring-2 focus:ring-[#B87F6C]/20 text-sm text-stone-900 outline-none"
+                      onChange={(e) => setClientPhone(formatBrazilianPhoneInput(e.target.value))}
+                      className="w-full pl-20 pr-4 py-2.5 rounded-xl border border-[#DDBFB2] focus:border-[#B87F6C] focus:ring-2 focus:ring-[#B87F6C]/20 text-sm text-stone-900 outline-none"
                     />
                   </div>
                   <span className="text-[11px] text-stone-500 block mt-1">
-                    Insira apenas números com DDD para envio automático da confirmação.
+                    Padrão Brasil (+55). Insira seu DDD e número para envio automático da confirmação via WhatsApp.
                   </span>
                 </div>
 
@@ -800,12 +805,12 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
               `💆‍♀️ *Procedimento:* ${selectedService?.name}\n` +
               `📅 *Data:* ${selectedDate.split('-').reverse().join('/')} às ${selectedSlot?.startTime}\n` +
               `👤 *Nome:* ${clientName}\n` +
-              `📱 *WhatsApp:* ${clientPhone}\n\n` +
+              `📱 *WhatsApp:* ${formatPhoneDisplay(clientPhone)}\n\n` +
               `Pode confirmar meu horário? Obrigada! 💖`
             );
 
-            const targetPhone = (selectedStylist?.phone || '5551995037223').replace(/\D/g, '');
-            const waDirectUrl = `https://wa.me/${targetPhone}?text=${clientMsgToStudio}`;
+            const studioTargetPhone = selectedStylist?.phone || '5551995037223';
+            const waDirectUrl = buildWhatsAppUrl(studioTargetPhone, decodeURIComponent(clientMsgToStudio));
 
             return (
               <div className="py-2 space-y-5 text-center">
@@ -927,7 +932,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
 
                 <div className="pt-1">
                   <a
-                    href={`https://wa.me/${targetPhone}?text=${encodeURIComponent('Olá Letícia! Acabei de fazer um agendamento no site e gostaria de tirar uma dúvida.')}`}
+                    href={buildWhatsAppUrl(studioTargetPhone, 'Olá Letícia! Acabei de fazer um agendamento no site e gostaria de tirar uma dúvida.')}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-[#B87F6C] transition-colors"

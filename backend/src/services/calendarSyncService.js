@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { JWT } from 'google-auth-library';
+import { formatPhoneDisplay } from '../utils/phoneUtils.js';
 
 /**
  * Serviço de sincronização 100% automático com Google Calendar
@@ -75,7 +76,7 @@ export class CalendarSyncService {
           location: 'Condomínio Altos da Theodomiro 2, 2435, Bloco 6, Apê 652',
           description: (
             `👤 Cliente: ${appointmentData.clientName}\n` +
-            `📱 WhatsApp: ${appointmentData.clientPhone}\n` +
+            `📱 WhatsApp: ${formatPhoneDisplay(appointmentData.clientPhone)}\n` +
             `💆‍♀️ Procedimento: ${appointmentData.serviceName} (${appointmentData.durationMinutes || 60} min)\n` +
             `📍 Endereço: Condomínio Altos da Theodomiro 2, 2435, Bloco 6, Apê 652 (2ª portaria)\n\n` +
             `⏰ Regra: Cancelamento/remarcação com 24h de antecedência.`

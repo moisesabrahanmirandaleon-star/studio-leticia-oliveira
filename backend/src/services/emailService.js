@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { formatPhoneDisplay, buildWhatsAppClickToChatUrl } from '../utils/phoneUtils.js';
 
 /**
  * Serviço de notificações por E-mail para a dona do estúdio (Letícia)
@@ -74,8 +75,8 @@ export class EmailService {
               <tr>
                 <td style="padding: 6px 0; font-weight: bold;">📱 WhatsApp:</td>
                 <td style="padding: 6px 0;">
-                  <a href="https://wa.me/${String(clientPhone).replace(/\D/g, '')}" style="color: #059669; font-weight: bold; text-decoration: none;">
-                    ${clientPhone} ↗ (Conversar)
+                  <a href="${buildWhatsAppClickToChatUrl(clientPhone)}" style="color: #059669; font-weight: bold; text-decoration: none;">
+                    ${formatPhoneDisplay(clientPhone)} ↗ (Conversar)
                   </a>
                 </td>
               </tr>
@@ -114,7 +115,7 @@ export class EmailService {
           </div>
 
           <div style="text-align: center; margin: 24px 0 10px 0;">
-            <a href="https://wa.me/${String(clientPhone).replace(/\D/g, '')}" 
+            <a href="${buildWhatsAppClickToChatUrl(clientPhone)}" 
                style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 24px; border-radius: 9999px; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
               Abrir WhatsApp da Cliente 📲
             </a>

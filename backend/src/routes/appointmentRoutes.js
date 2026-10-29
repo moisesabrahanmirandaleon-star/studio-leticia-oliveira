@@ -4,7 +4,8 @@ import {
   listAppointments,
   updateAppointmentStatus,
   rescheduleAppointment,
-  deleteAppointment
+  deleteAppointment,
+  streamAppointments
 } from '../controllers/appointmentController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -12,6 +13,9 @@ const router = Router();
 
 // Rota pública para cliente agendar
 router.post('/', createAppointment);
+
+// Canal em tempo real (Server-Sent Events) para avisos imediatos no painel da dona
+router.get('/stream', streamAppointments);
 
 // Rotas administrativas protegidas para gestão da agenda
 router.get('/', authenticateToken, listAppointments);

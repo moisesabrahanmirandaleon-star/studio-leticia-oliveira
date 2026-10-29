@@ -1,11 +1,18 @@
 import prisma from '../config/prisma.js';
+import { pushNotificationService } from '../services/pushNotificationService.js';
+import { broadcastSSE } from './appointmentController.js';
+import {
+  cleanPhoneDigits,
+  normalizeToBrazilianWhatsapp,
+  formatPhoneDisplay,
+  buildWhatsAppClickToChatUrl
+} from '../utils/phoneUtils.js';
 
 /**
  * Utilitário para limpar telefone (apenas números)
  */
 function cleanPhoneNumber(phone) {
-  if (!phone) return '';
-  return phone.replace(/\D/g, '');
+  return normalizeToBrazilianWhatsapp(phone);
 }
 
 /**
@@ -262,6 +269,19 @@ export async function applyForBonus(req, res) {
       }
     });
 
+    // Notificar administradora em tempo real via Web Push e SSE
+    pushNotificationService.sendNotificationToAll({
+      title: `🎁 Novo Bônus Solicitado: ${application.clientName}`,
+      body: `Campanha: ${application.campaign?.title || 'Bônus'} (${formatPhoneDisplay(cleanPhone)})`,
+      url: '/admin',
+      tag: `bonus-${application.id}`
+    }).catch(err => console.error('Erro ao enviar push de bônus:', err.message));
+
+    broadcastSSE({
+      type: 'NEW_BONUS',
+      application
+    });
+
     return res.status(201).json({
       message: 'Solicitação de bônus realizada com sucesso!',
       application,
@@ -286,9 +306,15 @@ export async function checkBonusStatus(req, res) {
     }
 
     const cleanPhone = cleanPhoneNumber(phone);
+    const rawDigits = cleanPhoneDigits(phone);
 
     const applications = await prisma.bonusApplication.findMany({
-      where: { clientPhone: cleanPhone },
+      where: {
+        OR: [
+          { clientPhone: cleanPhone },
+          { clientPhone: rawDigits }
+        ]
+      },
       include: { campaign: true },
       orderBy: { appliedAt: 'desc' }
     });
@@ -364,7 +390,7 @@ export async function updateApplicationStatus(req, res) {
       }
 
       if (msg) {
-        whatsappNotifyUrl = `https://wa.me/55${updated.clientPhone}?text=${encodeURIComponent(msg)}`;
+        whatsappNotifyUrl = buildWhatsAppClickToChatUrl(updated.clientPhone, msg);
       }
     }
 

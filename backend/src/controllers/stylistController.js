@@ -1,4 +1,5 @@
 import prisma from '../config/prisma.js';
+import { normalizeToBrazilianWhatsapp } from '../utils/phoneUtils.js';
 
 export async function listStylists(req, res) {
   try {
@@ -82,7 +83,7 @@ export async function updateStylist(req, res) {
     if (name !== undefined) dataToUpdate.name = name.trim();
     if (bio !== undefined) dataToUpdate.bio = bio?.trim();
     if (photoUrl !== undefined) dataToUpdate.photoUrl = photoUrl?.trim();
-    if (phone !== undefined) dataToUpdate.phone = phone?.trim();
+    if (phone !== undefined) dataToUpdate.phone = normalizeToBrazilianWhatsapp(phone);
     if (active !== undefined) dataToUpdate.active = Boolean(active);
 
     if (address !== undefined) dataToUpdate.address = address?.trim();

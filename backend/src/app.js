@@ -12,6 +12,7 @@ import scheduleRoutes from './routes/scheduleRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import bonusRoutes from './routes/bonusRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/bonus', bonusRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Servir frontend compilado em produção caso a pasta dist exista
 if (fs.existsSync(distPath)) {

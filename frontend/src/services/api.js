@@ -202,5 +202,20 @@ export const api = {
   getMe: (token) =>
     request('/auth/me', {
       headers: { Authorization: `Bearer ${token}` }
-    })
+    }),
+
+  // Notificações Push & Tempo Real
+  getVapidPublicKey: () =>
+    request('/notifications/vapid-public-key'),
+  subscribeToPush: (subscription) =>
+    request('/notifications/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ subscription })
+    }),
+  testPushNotification: () =>
+    request('/notifications/test', {
+      method: 'POST'
+    }),
+  getAppointmentStreamUrl: (token) =>
+    `${API_BASE}/appointments/stream?token=${encodeURIComponent(token || '')}`
 };

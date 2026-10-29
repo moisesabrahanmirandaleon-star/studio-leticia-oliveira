@@ -3,6 +3,49 @@ import { validateSlotAvailability } from '../services/availabilityService.js';
 import { whatsappService } from '../services/whatsappService.js';
 import { calendarSyncService } from '../services/calendarSyncService.js';
 import { emailService } from '../services/emailService.js';
+import { pushNotificationService } from '../services/pushNotificationService.js';
+import { formatPhoneDisplay } from '../utils/phoneUtils.js';
+
+// Central de conexões em tempo real (Server-Sent Events)
+const sseClients = new Set();
+
+export function streamAppointments(req, res) {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  sseClients.add(res);
+
+  // Mensagem inicial de handshake
+  res.write(`data: ${JSON.stringify({ type: 'CONNECTED', timestamp: Date.now() })}\n\n`);
+
+  // Heartbeat periódico (a cada 25s) para impedir corte por proxies de nuvem
+  const heartbeat = setInterval(() => {
+    try {
+      res.write(': heartbeat\n\n');
+    } catch {
+      clearInterval(heartbeat);
+      sseClients.delete(res);
+    }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sseClients.delete(res);
+  });
+}
+
+export function broadcastSSE(data) {
+  const message = `data: ${JSON.stringify(data)}\n\n`;
+  for (const client of sseClients) {
+    try {
+      client.write(message);
+    } catch {
+      sseClients.delete(client);
+    }
+  }
+}
 
 export async function createAppointment(req, res) {
   try {
@@ -56,11 +99,14 @@ export async function createAppointment(req, res) {
 
     const endTime = validation.endTime;
 
+    // Normalizar telefone com DDI Brasil (+55) garantido
+    const formattedClientPhone = formatPhoneDisplay(clientPhone);
+
     // 4. Salvar agendamento
     const appointment = await prisma.appointment.create({
       data: {
         clientName: clientName.trim(),
-        clientPhone: clientPhone.trim(),
+        clientPhone: formattedClientPhone,
         clientEmail: clientEmail?.trim() || null,
         stylistId: stylist.id,
         serviceId: service.id,
@@ -102,6 +148,21 @@ export async function createAppointment(req, res) {
       notes: appointment.notes,
       price: appointment.service.price
     }).catch(err => console.error('Erro ao disparar email de notificação:', err.message));
+
+    // 5.2 Disparar Notificação Instantânea Web Push para o Android e PC da dona
+    const cleanDt = String(appointment.date).split('T')[0].split('-').reverse().join('/');
+    pushNotificationService.sendNotificationToAll({
+      title: `✨ Novo Agendamento: ${appointment.clientName}`,
+      body: `${appointment.service.name} em ${cleanDt} às ${appointment.startTime}`,
+      url: '/admin',
+      tag: `appointment-${appointment.id}`
+    }).catch(err => console.error('Erro ao disparar push notification:', err.message));
+
+    // 5.3 Notificação Instantânea em Tempo Real (SSE) para telas abertas da administradora
+    broadcastSSE({
+      type: 'NEW_APPOINTMENT',
+      appointment
+    });
 
     // 6. Gerar o aviso oficial de agendamento e política de 24h para a cliente
     const clientNoticeMessage = whatsappService.formatClientNoticeMessage({

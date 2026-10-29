@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gift, Sparkles, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { formatBrazilianPhoneInput, formatPhoneDisplay } from '../utils/phoneUtils';
 
 export function BonusSection({ onOpenBooking }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -60,7 +61,7 @@ export function BonusSection({ onOpenBooking }) {
       const res = await api.applyForBonus({
         campaignId: selectedCampaign.id,
         clientName: clientName.trim(),
-        clientPhone: clientPhone.trim(),
+        clientPhone: formatPhoneDisplay(clientPhone),
         clientEmail: clientEmail.trim() || null,
         serviceName: serviceName.trim() || selectedCampaign.title
       });
@@ -355,16 +356,23 @@ export function BonusSection({ onOpenBooking }) {
 
                   <div>
                     <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                      Seu WhatsApp (com DDD) *
+                      Seu WhatsApp (Brasil) *
                     </label>
-                    <input
-                      type="tel"
-                      required
-                      value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                      placeholder="(51) 99999-9999"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none focus:ring-2 focus:ring-[#B87F6C]/20"
-                    />
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3 flex items-center gap-1 pointer-events-none select-none text-[11px] font-bold text-stone-700">
+                        <span className="text-xs">🇧🇷</span>
+                        <span>+55</span>
+                        <span className="text-stone-300">|</span>
+                      </div>
+                      <input
+                        type="tel"
+                        required
+                        value={clientPhone}
+                        onChange={(e) => setClientPhone(formatBrazilianPhoneInput(e.target.value))}
+                        placeholder="(51) 98047-0713"
+                        className="w-full pl-18 pr-3.5 py-2.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none focus:ring-2 focus:ring-[#B87F6C]/20"
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -432,14 +440,21 @@ export function BonusSection({ onOpenBooking }) {
             </div>
 
             <form onSubmit={handleCheckStatus} className="flex gap-2">
-              <input
-                type="tel"
-                required
-                value={statusPhone}
-                onChange={(e) => setStatusPhone(e.target.value)}
-                placeholder="Ex: (51) 99503-7223"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
-              />
+              <div className="relative flex-1">
+                <div className="absolute left-3 top-2.5 flex items-center gap-1 pointer-events-none select-none text-[11px] font-bold text-stone-700">
+                  <span className="text-xs">🇧🇷</span>
+                  <span>+55</span>
+                  <span className="text-stone-300">|</span>
+                </div>
+                <input
+                  type="tel"
+                  required
+                  value={statusPhone}
+                  onChange={(e) => setStatusPhone(formatBrazilianPhoneInput(e.target.value))}
+                  placeholder="(51) 98047-0713"
+                  className="w-full pl-18 pr-3.5 py-2.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={statusLoading}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, Heart, MessageCircle, MapPin, Phone, Lock, Globe } from 'lucide-react';
+import { buildWhatsAppUrl } from '../utils/phoneUtils';
 
 export function Footer({ onOpenAdmin, stylist }) {
   const currentStylist = stylist || {};
@@ -66,9 +67,9 @@ export function Footer({ onOpenAdmin, stylist }) {
               )}
 
               {/* WhatsApp */}
-              {cleanPhone && (
+              {phone && (
                 <a
-                  href={`https://wa.me/${cleanPhone}`}
+                  href={buildWhatsAppUrl(phone)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-stone-800 hover:bg-emerald-600 text-stone-300 hover:text-white flex items-center justify-center transition-colors"
