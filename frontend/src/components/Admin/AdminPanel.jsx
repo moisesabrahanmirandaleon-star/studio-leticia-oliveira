@@ -95,14 +95,30 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [multiSelectMode, setMultiSelectMode] = useState(false);
   const [selectedDates, setSelectedDates] = useState(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
-  const [batchPreset, setBatchPreset] = useState('ODD_DAYS'); // 'ODD_DAYS', 'EVEN_DAYS', 'PATTERN_1X1', 'PATTERN_2X2', 'WEEKENDS', 'WEEKDAYS', 'CUSTOM'
+  const [batchPreset, setBatchPreset] = useState('DUAL_ODD_EVEN'); // 'DUAL_ODD_EVEN', 'ODD_DAYS', 'EVEN_DAYS', 'PATTERN_1X1', 'PATTERN_2X2', 'WEEKENDS', 'WEEKDAYS', 'CUSTOM'
+  const [batchIsOpen, setBatchIsOpen] = useState(true);
   const [batchStartTime, setBatchStartTime] = useState('09:00');
   const [batchEndTime, setBatchEndTime] = useState('19:00');
   const [batchBreakStart, setBatchBreakStart] = useState('12:00');
   const [batchBreakEnd, setBatchBreakEnd] = useState('13:00');
-  const [batchCloseOthers, setBatchCloseOthers] = useState(true);
+  const [batchCloseOthers, setBatchCloseOthers] = useState(false);
   const [batchNote, setBatchNote] = useState('Escala de Trabalho');
   const [applyingBatch, setApplyingBatch] = useState(false);
+
+  // Estados específicos para Escala Dupla (Dois Empregos: Ímpares vs Pares)
+  const [dualOddOpen, setDualOddOpen] = useState(true);
+  const [dualOddStart, setDualOddStart] = useState('14:00');
+  const [dualOddEnd, setDualOddEnd] = useState('19:00');
+  const [dualOddBreakStart, setDualOddBreakStart] = useState('');
+  const [dualOddBreakEnd, setDualOddBreakEnd] = useState('');
+  const [dualOddNote, setDualOddNote] = useState('Escala Dias Ímpares');
+
+  const [dualEvenOpen, setDualEvenOpen] = useState(true);
+  const [dualEvenStart, setDualEvenStart] = useState('09:00');
+  const [dualEvenEnd, setDualEvenEnd] = useState('13:00');
+  const [dualEvenBreakStart, setDualEvenBreakStart] = useState('');
+  const [dualEvenBreakEnd, setDualEvenBreakEnd] = useState('');
+  const [dualEvenNote, setDualEvenNote] = useState('Escala Dias Pares');
 
   // --- BLOQUEIO DE MESES, SEMANAS E DIAS NA AGENDA ---
   const [showBlockModal, setShowBlockModal] = useState(false);
@@ -1242,23 +1258,76 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     }
   };
 
-  // Seleção múltipla de datas no calendário
+  // Alternar seleção de data individual
+  const toggleDateSelection = (dateStr) => {
+    const updated = new Set(selectedDates);
+    if (updated.has(dateStr)) {
+      updated.delete(dateStr);
+    } else {
+      updated.add(dateStr);
+    }
+    setSelectedDates(updated);
+    if (updated.size > 0) {
+      setMultiSelectMode(true);
+    }
+  };
+
+  // Seleção rápida por filtro no calendário (Ímpares, Pares, etc.)
+  const handleSelectFilter = (filterType) => {
+    const newSelected = new Set();
+    monthDays.forEach((d) => {
+      const dayNum = d.day;
+      const dow = d.dayOfWeek;
+      if (filterType === 'ODD' && dayNum % 2 !== 0) newSelected.add(d.date);
+      if (filterType === 'EVEN' && dayNum % 2 === 0) newSelected.add(d.date);
+      if (filterType === 'WEEKDAYS' && dow >= 1 && dow <= 5) newSelected.add(d.date);
+      if (filterType === 'WEEKENDS' && (dow === 0 || dow === 6)) newSelected.add(d.date);
+      if (filterType === 'ALL') newSelected.add(d.date);
+    });
+    setSelectedDates(newSelected);
+    setMultiSelectMode(true);
+  };
+
+  // Seleção de data ao clicar no card
   const handleDateClick = (dayItem) => {
     if (multiSelectMode) {
-      const updated = new Set(selectedDates);
-      if (updated.has(dayItem.date)) {
-        updated.delete(dayItem.date);
-      } else {
-        updated.add(dayItem.date);
-      }
-      setSelectedDates(updated);
+      toggleDateSelection(dayItem.date);
     } else {
       // Abre o modal de detalhe daquele dia
       setSelectedDayDetail({ ...dayItem });
     }
   };
 
-  // Aplicar regra de escala em lote (Dias Ímpares, Dias Pares, Escala 1x1, etc.)
+  // Ação rápida em lote para datas selecionadas (ex: fechar todas ou abrir todas em 1 clique)
+  const handleBatchSetStatus = async (isOpen, defaultNote = '') => {
+    if (selectedDates.size === 0) return;
+    setApplyingBatch(true);
+    try {
+      const payload = {
+        stylistId,
+        year: currentYear,
+        month: currentMonth,
+        mode: 'CUSTOM_DATES',
+        customDates: Array.from(selectedDates),
+        closeOthers: false,
+        isOpen,
+        startTime: isOpen ? '09:00' : null,
+        endTime: isOpen ? '19:00' : null,
+        note: defaultNote || (isOpen ? 'Atendimento confirmado' : 'Folga / Outro trabalho')
+      };
+      const res = await api.batchUpdateSchedule(payload, token);
+      alert(res.message || 'Escala atualizada com sucesso!');
+      setSelectedDates(new Set());
+      setMultiSelectMode(false);
+      loadMonthSchedule(currentYear, currentMonth);
+    } catch (err) {
+      alert(err.message || 'Erro ao atualizar datas selecionadas.');
+    } finally {
+      setApplyingBatch(false);
+    }
+  };
+
+  // Aplicar regra de escala em lote (Escala Dupla, Dias Ímpares, Dias Pares, etc.)
   const handleApplyBatchSchedule = async () => {
     setApplyingBatch(true);
     try {
@@ -1268,6 +1337,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         month: currentMonth,
         mode: batchPreset,
         closeOthers: batchCloseOthers,
+        isOpen: batchIsOpen,
         startTime: batchStartTime,
         endTime: batchEndTime,
         breakStart: batchBreakStart || null,
@@ -1275,7 +1345,24 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         note: batchNote
       };
 
-      if (batchPreset === 'CUSTOM') {
+      if (batchPreset === 'DUAL_ODD_EVEN') {
+        payload.oddConfig = {
+          isOpen: dualOddOpen,
+          startTime: dualOddStart,
+          endTime: dualOddEnd,
+          breakStart: dualOddBreakStart || null,
+          breakEnd: dualOddBreakEnd || null,
+          note: dualOddNote
+        };
+        payload.evenConfig = {
+          isOpen: dualEvenOpen,
+          startTime: dualEvenStart,
+          endTime: dualEvenEnd,
+          breakStart: dualEvenBreakStart || null,
+          breakEnd: dualEvenBreakEnd || null,
+          note: dualEvenNote
+        };
+      } else if (batchPreset === 'CUSTOM') {
         payload.mode = 'CUSTOM_DATES';
         payload.customDates = Array.from(selectedDates);
       }
@@ -2190,8 +2277,9 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     <div className="flex flex-wrap items-center gap-2">
                       {/* Botão de Predefinições Rápidas */}
                       <button
+                        type="button"
                         onClick={() => {
-                          setBatchPreset('ODD_DAYS');
+                          setBatchPreset('DUAL_ODD_EVEN');
                           setShowBatchModal(true);
                         }}
                         className="px-3 py-2 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
@@ -2202,6 +2290,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                       {/* Botão de Bloqueio de Mês / Semana */}
                       <button
+                        type="button"
                         onClick={() => {
                           setBlockType('MONTH');
                           setBlockTargetMonth(currentMonth);
@@ -2219,9 +2308,11 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                       {/* Modo Multi-Seleção Livre */}
                       <button
+                        type="button"
                         onClick={() => {
-                          setMultiSelectMode(!multiSelectMode);
-                          setSelectedDates(new Set());
+                          const nextState = !multiSelectMode;
+                          setMultiSelectMode(nextState);
+                          if (!nextState) setSelectedDates(new Set());
                         }}
                         className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 cursor-pointer ${
                           multiSelectMode
@@ -2235,6 +2326,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                       {/* Restaurar Padrão */}
                       <button
+                        type="button"
                         onClick={handleResetMonth}
                         className="px-2.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold transition-colors cursor-pointer"
                         title="Remover todas as regras deste mês e usar horário semanal"
@@ -2243,6 +2335,65 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                         <span className="hidden md:inline">Restaurar</span>
                       </button>
                     </div>
+                  </div>
+
+                  {/* Atalhos Rápidos de Seleção no Calendário */}
+                  <div className="flex flex-wrap items-center gap-2 p-2.5 bg-gradient-to-r from-[#FAF6F4] to-white rounded-2xl border border-[#EBDCD5] text-xs">
+                    <span className="font-bold text-stone-700 flex items-center gap-1.5 text-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
+                      <span>Selecionar no Calendário:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFilter('ODD')}
+                      className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-50 text-stone-700 font-bold border border-[#DDBFB2] transition-colors cursor-pointer"
+                      title="Selecionar todos os dias ímpares do mês (1, 3, 5, 7...)"
+                    >
+                      🎯 Dias Ímpares (1, 3, 5...)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFilter('EVEN')}
+                      className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-50 text-stone-700 font-bold border border-[#DDBFB2] transition-colors cursor-pointer"
+                      title="Selecionar todos os dias pares do mês (2, 4, 6, 8...)"
+                    >
+                      🎯 Dias Pares (2, 4, 6...)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFilter('WEEKDAYS')}
+                      className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-50 text-stone-700 font-bold border border-[#DDBFB2] transition-colors cursor-pointer"
+                      title="Selecionar segunda a sexta"
+                    >
+                      💼 Seg a Sex
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFilter('WEEKENDS')}
+                      className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-50 text-stone-700 font-bold border border-[#DDBFB2] transition-colors cursor-pointer"
+                      title="Selecionar sábados e domingos"
+                    >
+                      🏖️ Sáb e Dom
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectFilter('ALL')}
+                      className="px-2.5 py-1 rounded-xl bg-white hover:bg-amber-50 text-stone-700 font-bold border border-[#DDBFB2] transition-colors cursor-pointer"
+                    >
+                      ✨ Todos do Mês
+                    </button>
+                    {selectedDates.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedDates(new Set());
+                          setMultiSelectMode(false);
+                        }}
+                        className="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition-colors cursor-pointer ml-auto"
+                      >
+                        ✕ Limpar Seleção ({selectedDates.size})
+                      </button>
+                    )}
                   </div>
 
                   {/* Banner de Aviso de Mês Inteiro Bloqueado */}
@@ -2279,30 +2430,68 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     </div>
                   )}
 
-                  {/* Barra flutuante quando datas estiverem selecionadas no modo multi-select */}
-                  {multiSelectMode && selectedDates.size > 0 && (
-                    <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-fadeIn text-xs">
-                      <div className="font-bold text-amber-900 flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px]">
+                  {/* Barra flutuante quando datas estiverem selecionadas */}
+                  {selectedDates.size > 0 && (
+                    <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-3 animate-fadeIn text-xs shadow-md">
+                      <div className="font-bold text-amber-950 flex items-center gap-2.5">
+                        <span className="w-7 h-7 rounded-full bg-[#B87F6C] text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
                           {selectedDates.size}
                         </span>
-                        <span>{selectedDates.size} dia(s) selecionado(s) neste mês</span>
+                        <div>
+                          <span className="text-xs font-extrabold block text-amber-950">
+                            {selectedDates.size} dia(s) selecionado(s) em {getMonthName(currentMonth)}:
+                          </span>
+                          <span className="text-[10px] text-amber-800 font-medium block">
+                            Dias: {Array.from(selectedDates).map(d => Number(d.split('-')[2])).sort((a,b)=>a-b).join(', ')}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
+                          type="button"
                           onClick={() => {
                             setBatchPreset('CUSTOM');
                             setShowBatchModal(true);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-[#B87F6C] text-white font-bold text-xs"
+                          className="px-3.5 py-2 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          Definir Horário para os Selecionados
+                          <Sliders className="w-3.5 h-3.5" />
+                          <span>Definir Horário</span>
                         </button>
+
                         <button
-                          onClick={() => setSelectedDates(new Set())}
-                          className="px-2.5 py-1.5 rounded-xl bg-white text-stone-600 font-bold border border-stone-200 text-xs"
+                          type="button"
+                          disabled={applyingBatch}
+                          onClick={() => handleBatchSetStatus(false, 'Folga / Outro Emprego')}
+                          className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Marcar todos os dias selecionados como Folga / Fechado"
                         >
-                          Desmarcar
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>Marcar Folga</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={applyingBatch}
+                          onClick={() => handleBatchSetStatus(true, 'Atendimento confirmado')}
+                          className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Liberar todos os selecionados com horário padrão (09h às 19h)"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Liberar (09h-19h)</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedDates(new Set());
+                            setMultiSelectMode(false);
+                          }}
+                          className="px-2.5 py-2 rounded-xl bg-white text-stone-600 font-bold border border-stone-200 hover:bg-stone-100 text-xs transition-colors cursor-pointer"
+                          title="Cancelar seleção"
+                        >
+                          ✕
                         </button>
                       </div>
                     </div>
@@ -2323,7 +2512,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       <strong>Amarelo:</strong> Horário Personalizado
                     </span>
                     <span className="text-[11px] text-stone-400 italic">
-                      Dica: Clique no botão circular dentro do dia para abrir/fechar na hora!
+                      Dica: Marque os quadradinhos para selecionar dias ou clique no círculo do dia para abrir/fechar na hora!
                     </span>
                   </div>
 
@@ -2365,7 +2554,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               onClick={() => handleDateClick(dayItem)}
                               className={`min-h-20 sm:min-h-24 p-2 sm:p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative group ${
                                 isSelected
-                                  ? 'ring-2 ring-[#B87F6C] bg-amber-50/70 border-[#B87F6C]'
+                                  ? 'ring-2 ring-[#B87F6C] bg-amber-50/80 border-[#B87F6C] shadow-sm'
                                   : dayItem.isOpen
                                   ? dayItem.isOverride
                                     ? 'bg-amber-50/40 border-amber-200 hover:border-amber-300'
@@ -2373,20 +2562,33 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                   : 'bg-stone-50 border-stone-200 opacity-70 hover:opacity-100'
                               }`}
                             >
-                              {/* Topo do Card: Número do dia e botão toggle */}
+                              {/* Topo do Card: Checkbox de seleção, Número do dia e botão toggle */}
                               <div className="flex items-center justify-between">
-                                <span
-                                  className={`text-xs sm:text-sm font-bold font-serif w-6 h-6 flex items-center justify-center rounded-full ${
-                                    isTodayDate
-                                      ? 'bg-[#B87F6C] text-white shadow-sm'
-                                      : 'text-stone-900'
-                                  }`}
-                                >
-                                  {dayItem.day}
-                                </span>
+                                <div className="flex items-center gap-1.5">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      toggleDateSelection(dayItem.date);
+                                    }}
+                                    className="w-3.5 h-3.5 rounded text-[#B87F6C] focus:ring-[#B87F6C] cursor-pointer"
+                                    title="Selecionar este dia para edição em lote"
+                                  />
+                                  <span
+                                    className={`text-xs sm:text-sm font-bold font-serif w-6 h-6 flex items-center justify-center rounded-full ${
+                                      isTodayDate
+                                        ? 'bg-[#B87F6C] text-white shadow-sm'
+                                        : 'text-stone-900'
+                                    }`}
+                                  >
+                                    {dayItem.day}
+                                  </span>
+                                </div>
 
                                 {/* Botão rápido para alternar aberto/fechado com 1 clique */}
                                 <button
+                                  type="button"
                                   onClick={(e) => handleQuickToggleDay(dayItem, e)}
                                   className={`p-1 rounded-full transition-transform active:scale-90 ${
                                     dayItem.isOpen
@@ -4328,36 +4530,60 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     Selecione o Padrão da sua Escala:
                   </label>
                   <div className="grid grid-cols-2 gap-2">
+                    {/* Opção Recomendada: Ímpares & Pares Juntos (Dois Empregos) */}
+                    <button
+                      type="button"
+                      onClick={() => setBatchPreset('DUAL_ODD_EVEN')}
+                      className={`col-span-2 p-3 rounded-2xl border-2 text-left font-bold transition-all cursor-pointer relative overflow-hidden ${
+                        batchPreset === 'DUAL_ODD_EVEN'
+                          ? 'bg-gradient-to-r from-amber-50 to-[#FAF6F4] border-[#B87F6C] text-[#7E4E40] shadow-sm'
+                          : 'bg-white border-[#EBDCD5] text-stone-700 hover:border-[#B87F6C]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-[#7E4E40]">
+                          <Sparkles className="w-4 h-4 text-[#B87F6C]" />
+                          Escala 2 Empregos (Ímpares & Pares Juntos)
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-[#B87F6C] text-white text-[10px] font-bold">
+                          Recomendado
+                        </span>
+                      </div>
+                      <span className="text-[11px] block font-normal text-stone-600 mt-1 leading-snug">
+                        Configure horários diferentes para dias ímpares e dias pares ao mesmo tempo. Sem que um apague o outro!
+                      </span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => setBatchPreset('ODD_DAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
                         batchPreset === 'ODD_DAYS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Dias Ímpares</span>
+                      <span>Apenas Dias Ímpares</span>
                       <span className="text-[10px] block font-normal text-stone-500">1, 3, 5, 7, 9...</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('EVEN_DAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
                         batchPreset === 'EVEN_DAYS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Dias Pares</span>
+                      <span>Apenas Dias Pares</span>
                       <span className="text-[10px] block font-normal text-stone-500">2, 4, 6, 8, 10...</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('PATTERN_1X1')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
                         batchPreset === 'PATTERN_1X1'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
@@ -4370,7 +4596,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     <button
                       type="button"
                       onClick={() => setBatchPreset('PATTERN_2X2')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
                         batchPreset === 'PATTERN_2X2'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
@@ -4382,8 +4608,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                     <button
                       type="button"
+                      onClick={() => setBatchPreset('WEEKDAYS')}
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                        batchPreset === 'WEEKDAYS'
+                          ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                      }`}
+                    >
+                      <span>Segunda a Sexta</span>
+                      <span className="text-[10px] block font-normal text-stone-500">Dias úteis</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => setBatchPreset('WEEKENDS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
                         batchPreset === 'WEEKENDS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
@@ -4393,106 +4632,317 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       <span className="text-[10px] block font-normal text-stone-500">Sábados e Domingos</span>
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={() => setBatchPreset('WEEKDAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all ${
-                        batchPreset === 'WEEKDAYS'
-                          ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
-                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                      }`}
-                    >
-                      <span>Segunda a Sexta</span>
-                      <span className="text-[10px] block font-normal text-stone-500">Dias úteis</span>
-                    </button>
+                    {selectedDates.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setBatchPreset('CUSTOM')}
+                        className={`col-span-2 p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                          batchPreset === 'CUSTOM'
+                            ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
+                            : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                        }`}
+                      >
+                        <span>Datas Selecionadas no Calendário ({selectedDates.size} dias)</span>
+                        <span className="text-[10px] block font-normal text-stone-500">
+                          Dias: {Array.from(selectedDates).map(d => Number(d.split('-')[2])).sort((a,b)=>a-b).join(', ')}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Horários aplicados a esses dias */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Início do Atendimento:
-                    </label>
-                    <input
-                      type="time"
-                      value={batchStartTime}
-                      onChange={(e) => setBatchStartTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                    />
+                {/* FORMULÁRIO 1: MODO DUPLO (ÍMPARES & PARES JUNTOS) */}
+                {batchPreset === 'DUAL_ODD_EVEN' ? (
+                  <div className="space-y-3 pt-2">
+                    {/* Bloco 1: Dias Ímpares */}
+                    <div className="p-3.5 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-[#7E4E40] text-xs flex items-center gap-1.5">
+                          <span>📅 DIAS ÍMPARES (1, 3, 5, 7, 9...)</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDualOddOpen(!dualOddOpen)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                            dualOddOpen
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-rose-600 text-white'
+                          }`}
+                        >
+                          {dualOddOpen ? 'Atendimento Aberto' : 'Folga / Sem Atendimento'}
+                        </button>
+                      </div>
+
+                      {dualOddOpen ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
+                                Início:
+                              </label>
+                              <input
+                                type="time"
+                                value={dualOddStart}
+                                onChange={(e) => setDualOddStart(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
+                                Fim:
+                              </label>
+                              <input
+                                type="time"
+                                value={dualOddEnd}
+                                onChange={(e) => setDualOddEnd(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
+                                Pausa Início (opcional):
+                              </label>
+                              <input
+                                type="time"
+                                value={dualOddBreakStart}
+                                onChange={(e) => setDualOddBreakStart(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
+                                Pausa Fim (opcional):
+                              </label>
+                              <input
+                                type="time"
+                                value={dualOddBreakEnd}
+                                onChange={(e) => setDualOddBreakEnd(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={dualOddNote}
+                              onChange={(e) => setDualOddNote(e.target.value)}
+                              placeholder="Nota (Ex: Turno da Tarde)"
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-[11px]"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-rose-700 font-medium">
+                          Todos os dias ímpares ficarão bloqueados (sem agendamentos).
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Bloco 2: Dias Pares */}
+                    <div className="p-3.5 rounded-2xl bg-white border border-[#DDBFB2] space-y-2.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-extrabold text-stone-800 text-xs flex items-center gap-1.5">
+                          <span>📅 DIAS PARES (2, 4, 6, 8, 10...)</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setDualEvenOpen(!dualEvenOpen)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                            dualEvenOpen
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-rose-600 text-white'
+                          }`}
+                        >
+                          {dualEvenOpen ? 'Atendimento Aberto' : 'Folga / Sem Atendimento'}
+                        </button>
+                      </div>
+
+                      {dualEvenOpen ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
+                                Início:
+                              </label>
+                              <input
+                                type="time"
+                                value={dualEvenStart}
+                                onChange={(e) => setDualEvenStart(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
+                                Fim:
+                              </label>
+                              <input
+                                type="time"
+                                value={dualEvenEnd}
+                                onChange={(e) => setDualEvenEnd(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
+                                Pausa Início (opcional):
+                              </label>
+                              <input
+                                type="time"
+                                value={dualEvenBreakStart}
+                                onChange={(e) => setDualEvenBreakStart(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
+                                Pausa Fim (opcional):
+                              </label>
+                              <input
+                                type="time"
+                                value={dualEvenBreakEnd}
+                                onChange={(e) => setDualEvenBreakEnd(e.target.value)}
+                                className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={dualEvenNote}
+                              onChange={(e) => setDualEvenNote(e.target.value)}
+                              placeholder="Nota (Ex: Turno da Manhã)"
+                              className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-[11px]"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-rose-700 font-medium">
+                          Todos os dias pares ficarão bloqueados (sem agendamentos).
+                        </p>
+                      )}
+                    </div>
                   </div>
+                ) : (
+                  /* FORMULÁRIO 2: MODO PADRÃO INDIVIDUAL OU DATAS SELECIONADAS */
+                  <div className="space-y-3 pt-2">
+                    {/* Status de Atendimento Aberto ou Fechado */}
+                    <div className="p-3 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-stone-900 block text-xs">
+                          Status dos Dias Selecionados
+                        </span>
+                        <span className="text-[10px] text-stone-500">
+                          {batchIsOpen ? 'Liberar horários para atendimento' : 'Marcar como Folga / Fechado'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setBatchIsOpen(!batchIsOpen)}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer ${
+                          batchIsOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                        }`}
+                      >
+                        {batchIsOpen ? 'Atendimento Aberto' : 'Fechado (Folga)'}
+                      </button>
+                    </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Fim do Atendimento:
-                    </label>
-                    <input
-                      type="time"
-                      value={batchEndTime}
-                      onChange={(e) => setBatchEndTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                    />
+                    {batchIsOpen && (
+                      <>
+                        {/* Horários aplicados */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                              Início do Atendimento:
+                            </label>
+                            <input
+                              type="time"
+                              value={batchStartTime}
+                              onChange={(e) => setBatchStartTime(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                              Fim do Atendimento:
+                            </label>
+                            <input
+                              type="time"
+                              value={batchEndTime}
+                              onChange={(e) => setBatchEndTime(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Intervalo de Almoço */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                              Início do Almoço:
+                            </label>
+                            <input
+                              type="time"
+                              value={batchBreakStart}
+                              onChange={(e) => setBatchBreakStart(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                              Fim do Almoço:
+                            </label>
+                            <input
+                              type="time"
+                              value={batchBreakEnd}
+                              onChange={(e) => setBatchBreakEnd(e.target.value)}
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Fechar os outros dias */}
+                    <div className="pt-2">
+                      <label className="flex items-start gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={batchCloseOthers}
+                          onChange={(e) => setBatchCloseOthers(e.target.checked)}
+                          className="w-4 h-4 mt-0.5 rounded text-[#B87F6C] focus:ring-[#B87F6C]"
+                        />
+                        <div>
+                          <span className="font-bold text-stone-800 text-xs">
+                            Bloquear os outros dias do mês como FOLGA
+                          </span>
+                          <p className="text-[10px] text-stone-500 mt-0.5 leading-tight">
+                            (Deixe <strong>desmarcado</strong> se você já configurou ou quer configurar os outros dias separadamente).
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Nota do Lote */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                        Identificação / Nota Interna:
+                      </label>
+                      <input
+                        type="text"
+                        value={batchNote}
+                        onChange={(e) => setBatchNote(e.target.value)}
+                        placeholder="Ex: Escala 12x36 ou Plantão externo"
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                      />
+                    </div>
                   </div>
-                </div>
-
-                {/* Intervalo de Almoço */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Início do Almoço:
-                    </label>
-                    <input
-                      type="time"
-                      value={batchBreakStart}
-                      onChange={(e) => setBatchBreakStart(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                      Fim do Almoço:
-                    </label>
-                    <input
-                      type="time"
-                      value={batchBreakEnd}
-                      onChange={(e) => setBatchBreakEnd(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                    />
-                  </div>
-                </div>
-
-                {/* Fechar os outros dias */}
-                <div className="pt-2">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={batchCloseOthers}
-                      onChange={(e) => setBatchCloseOthers(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#B87F6C] focus:ring-[#B87F6C]"
-                    />
-                    <span className="font-bold text-stone-800">
-                      Bloquear os outros dias do mês como FOLGA / TRABALHO
-                    </span>
-                  </label>
-                  <p className="text-[10px] text-stone-500 pl-6 mt-0.5">
-                    (Recomendado: se você marcou dias ímpares, os dias pares ficarão indisponíveis para clientes agendarem).
-                  </p>
-                </div>
-
-                {/* Nota do Lote */}
-                <div>
-                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
-                    Identificação / Nota Interna:
-                  </label>
-                  <input
-                    type="text"
-                    value={batchNote}
-                    onChange={(e) => setBatchNote(e.target.value)}
-                    placeholder="Ex: Escala 12x36 ou Plantão externo"
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  />
-                </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">

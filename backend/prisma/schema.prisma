@@ -49,7 +49,7 @@ model Stylist {
   heroQuote               String?  @default("Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante.")
   aboutTitle              String?  @default("Um refúgio de acolhimento e cuidado desenhado para realçar você.")
   aboutDescription        String?  @default("O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada.")
-  experienceYears         String?  @default("Desde 2023 · Beleza & Visagismo")
+  experienceYears         String?  @default("Desde 2023")
   pixKey                  String?  @default("5551995037223")
   pixType                 String?  @default("Telefone") // "Telefone", "CPF", "Email", "Aleatória"
   cancellationNoticeHours Int?     @default(24)

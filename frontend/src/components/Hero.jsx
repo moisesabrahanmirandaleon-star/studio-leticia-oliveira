@@ -18,6 +18,12 @@ export function Hero({ onOpenBooking, stylist }) {
   const headline = currentStylist.headline || "Cuidando do seu olhar com amor, visagismo & dedicação.";
   const heroQuote = currentStylist.heroQuote || `"Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante."`;
 
+  const rawExperienceYears = currentStylist.experienceYears || 'Desde 2023';
+  const cleanExperienceYears = rawExperienceYears
+    .replace(/[•·-]?\s*Visagismo/gi, '')
+    .replace(/[•·-]?\s*Beleza/gi, '')
+    .trim() || 'Desde 2023';
+
   const defaultBio = `Sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.\n\nFoi em 2023 que comecei a me enxergar nessa área e percebi que aquela paixão poderia se transformar em algo muito maior. Assim, dei início à minha caminhada no universo das sobrancelhas, descobrindo novas possibilidades de crescimento e realização.`;
 
   const bioText = currentStylist.bio || defaultBio;
@@ -122,67 +128,40 @@ export function Hero({ onOpenBooking, stylist }) {
               </div>
 
               {/* Floating Experiência Badge (Top-Left) */}
-              <div className="absolute top-5 -left-3 sm:-left-5 z-20 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/40 flex items-center gap-1.5 transform hover:scale-105 transition-transform">
+              <div className="absolute top-5 -left-2 sm:-left-4 z-20 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/40 flex items-center gap-1.5 transform hover:scale-105 transition-transform">
                 <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                <span>{currentStylist.experienceYears || 'Desde 2023'} • Visagismo</span>
+                <span>{cleanExperienceYears}</span>
               </div>
 
-              {/* Floating WhatsApp Card (Top-Right) */}
-              <div className="absolute top-6 -right-3 sm:-right-6 z-20 bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl shadow-xl border border-[#DDBFB2] hover:border-emerald-500 transition-all transform hover:-translate-y-0.5 hover:shadow-2xl group">
-                <a
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5"
-                  title="Conversar com a Letícia no WhatsApp"
-                >
-                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                    <MessageCircle className="w-5 h-5 fill-current" />
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border-2 border-white"></span>
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-stone-900 tracking-tight leading-tight">{displayPhone}</p>
-                    <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
-                      Fale no WhatsApp
-                    </p>
-                  </div>
-                </a>
-              </div>
+              {/* Floating Instagram Icon Button (Bottom-Left) */}
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute -bottom-4 left-3 sm:left-4 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white shadow-xl border-2 border-white hover:scale-110 active:scale-95 transition-all cursor-pointer group"
+                title="Instagram da Letícia"
+                aria-label="Instagram"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 fill-current transition-transform group-hover:rotate-6" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </a>
 
-              {/* Floating Instagram Follow Card (Bottom-Left) */}
-              <div className="absolute -bottom-5 -left-3 sm:-left-6 z-20 bg-white/95 backdrop-blur-md p-2.5 sm:p-3.5 rounded-2xl shadow-xl border border-[#DDBFB2] hover:border-rose-400 transition-all transform hover:-translate-y-0.5 hover:shadow-2xl group">
-                <a
-                  href={instagramUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 sm:gap-3"
-                  title="Visitar Instagram do Studio Letícia Oliveira"
-                >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] flex items-center justify-center text-white shadow-md shrink-0 group-hover:scale-105 transition-transform">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-stone-900 tracking-tight leading-tight">{displayInstagram}</p>
-                    <p className="text-[10px] text-stone-500 font-medium mt-0.5">Siga no Instagram ✨</p>
-                  </div>
-                </a>
-              </div>
-
-              {/* Floating review card (Bottom-Right) */}
-              <div className="absolute -bottom-5 -right-2 sm:-right-4 z-10 bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl border border-[#EBDCD5] hidden sm:flex items-center gap-2">
-                <div className="flex text-amber-400 text-xs">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                  ))}
-                </div>
-                <span className="text-[11px] font-bold text-stone-800">5.0 Visagismo</span>
-              </div>
+              {/* Floating WhatsApp Icon Button (Bottom-Right - Na outra esquina da foto) */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute -bottom-4 right-3 sm:right-4 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 to-green-500 flex items-center justify-center text-white shadow-xl border-2 border-white hover:scale-110 active:scale-95 transition-all cursor-pointer group"
+                title="Conversar no WhatsApp"
+                aria-label="WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 fill-current transition-transform group-hover:scale-110" />
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400 border-2 border-white"></span>
+                </span>
+              </a>
 
             </div>
           </div>

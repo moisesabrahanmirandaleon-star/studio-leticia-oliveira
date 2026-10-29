@@ -172,7 +172,7 @@ export async function updateDateSchedule(req, res) {
 }
 
 /**
- * Aplicação em Lote / Escala Mensal (Dias Ímpares, Dias Pares, Escala 1x1, 2x2, etc.)
+ * Aplicação em Lote / Escala Mensal (Dias Ímpares, Dias Pares, Escala 1x1, 2x2, Escala Dupla, etc.)
  */
 export async function batchUpdateSchedule(req, res) {
   try {
@@ -180,14 +180,17 @@ export async function batchUpdateSchedule(req, res) {
       stylistId,
       year,
       month,
-      mode, // 'ODD_DAYS' | 'EVEN_DAYS' | 'CUSTOM_DATES' | 'PATTERN_1X1' | 'PATTERN_2X2' | 'WEEKENDS' | 'WEEKDAYS'
+      mode, // 'DUAL_ODD_EVEN' | 'ODD_DAYS' | 'EVEN_DAYS' | 'CUSTOM_DATES' | 'PATTERN_1X1' | 'PATTERN_2X2' | 'WEEKENDS' | 'WEEKDAYS' | 'ALL_DAYS'
       customDates, // array de 'YYYY-MM-DD'
       closeOthers = false, // se true, os outros dias do mês são marcados como fechados
+      isOpen = true, // se os dias selecionados estarão abertos ou fechados
       startTime = '09:00',
       endTime = '19:00',
       breakStart = '12:00',
       breakEnd = '13:00',
-      note = 'Escala definida'
+      note = 'Escala definida',
+      oddConfig,
+      evenConfig
     } = req.body;
 
     if (!stylistId || !year || !month || !mode) {
@@ -196,6 +199,63 @@ export async function batchUpdateSchedule(req, res) {
 
     const daysInMonth = new Date(year, month, 0).getDate();
     const monthStr = String(month).padStart(2, '0');
+
+    // MODO ESPECIAL: ESCALA DUPLA (Ímpares com um horário e Pares com outro horário)
+    if (mode === 'DUAL_ODD_EVEN') {
+      const odd = oddConfig || {};
+      const even = evenConfig || {};
+      const operations = [];
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+        const isOdd = (day % 2 !== 0);
+        const cfg = isOdd ? odd : even;
+
+        const dayIsOpen = cfg.isOpen !== undefined ? Boolean(cfg.isOpen) : true;
+        const dayStartTime = dayIsOpen ? (cfg.startTime || '09:00') : null;
+        const dayEndTime = dayIsOpen ? (cfg.endTime || '19:00') : null;
+        const dayBreakStart = dayIsOpen ? (cfg.breakStart || null) : null;
+        const dayBreakEnd = dayIsOpen ? (cfg.breakEnd || null) : null;
+        const dayNote = cfg.note || (dayIsOpen ? (isOdd ? 'Escala Dias Ímpares' : 'Escala Dias Pares') : 'Folga / Outro Emprego');
+
+        operations.push(
+          prisma.dateSchedule.upsert({
+            where: {
+              stylistId_date: {
+                stylistId: Number(stylistId),
+                date: dateStr
+              }
+            },
+            update: {
+              isOpen: dayIsOpen,
+              startTime: dayStartTime,
+              endTime: dayEndTime,
+              breakStart: dayBreakStart,
+              breakEnd: dayBreakEnd,
+              note: dayNote
+            },
+            create: {
+              stylistId: Number(stylistId),
+              date: dateStr,
+              isOpen: dayIsOpen,
+              startTime: dayStartTime,
+              endTime: dayEndTime,
+              breakStart: dayBreakStart,
+              breakEnd: dayBreakEnd,
+              note: dayNote
+            }
+          })
+        );
+      }
+
+      await prisma.$transaction(operations);
+
+      return res.json({
+        message: `Escala dupla (Ímpares & Pares) configurada com sucesso para os ${daysInMonth} dias de ${monthStr}/${year}!`,
+        appliedDaysCount: daysInMonth
+      });
+    }
 
     // Determinar quais dias são selecionados de acordo com o modo
     const targetDates = new Set();
@@ -243,6 +303,7 @@ export async function batchUpdateSchedule(req, res) {
 
     // Executar operações em transação no Prisma
     const operations = [];
+    const targetIsOpen = Boolean(isOpen);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dayStr = String(day).padStart(2, '0');
@@ -259,22 +320,22 @@ export async function batchUpdateSchedule(req, res) {
               }
             },
             update: {
-              isOpen: true,
-              startTime,
-              endTime,
-              breakStart: breakStart || null,
-              breakEnd: breakEnd || null,
-              note: note || 'Escala de Trabalho'
+              isOpen: targetIsOpen,
+              startTime: targetIsOpen ? startTime : null,
+              endTime: targetIsOpen ? endTime : null,
+              breakStart: targetIsOpen ? (breakStart || null) : null,
+              breakEnd: targetIsOpen ? (breakEnd || null) : null,
+              note: note || (targetIsOpen ? 'Escala de Trabalho' : 'Folga / Outro trabalho')
             },
             create: {
               stylistId: Number(stylistId),
               date: dateStr,
-              isOpen: true,
-              startTime,
-              endTime,
-              breakStart: breakStart || null,
-              breakEnd: breakEnd || null,
-              note: note || 'Escala de Trabalho'
+              isOpen: targetIsOpen,
+              startTime: targetIsOpen ? startTime : null,
+              endTime: targetIsOpen ? endTime : null,
+              breakStart: targetIsOpen ? (breakStart || null) : null,
+              breakEnd: targetIsOpen ? (breakEnd || null) : null,
+              note: note || (targetIsOpen ? 'Escala de Trabalho' : 'Folga / Outro trabalho')
             }
           })
         );
@@ -289,12 +350,20 @@ export async function batchUpdateSchedule(req, res) {
             },
             update: {
               isOpen: false,
+              startTime: null,
+              endTime: null,
+              breakStart: null,
+              breakEnd: null,
               note: 'Folga / Escala obrigatória no outro emprego'
             },
             create: {
               stylistId: Number(stylistId),
               date: dateStr,
               isOpen: false,
+              startTime: null,
+              endTime: null,
+              breakStart: null,
+              breakEnd: null,
               note: 'Folga / Escala obrigatória no outro emprego'
             }
           })
@@ -302,7 +371,9 @@ export async function batchUpdateSchedule(req, res) {
       }
     }
 
-    await prisma.$transaction(operations);
+    if (operations.length > 0) {
+      await prisma.$transaction(operations);
+    }
 
     return res.json({
       message: `Escala mensal atualizada com sucesso para ${targetDates.size} dias.`,

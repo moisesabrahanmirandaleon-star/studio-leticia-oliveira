@@ -1,5 +1,5 @@
 // Service Worker para PWA do Studio Letícia Oliveira
-const CACHE_NAME = 'studio-leticia-v2';
+const CACHE_NAME = 'studio-leticia-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

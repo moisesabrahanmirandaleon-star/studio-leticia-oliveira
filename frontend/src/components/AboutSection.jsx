@@ -7,7 +7,10 @@ export function AboutSection({ onOpenBooking, stylist }) {
   const aboutDescription = currentStylist.aboutDescription || "O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada. Com técnicas precisas de design, micropigmentação, brow lamination e despigmentação química, cada procedimento é personalizado para valorizar sua beleza com naturalidade e elegância.";
   const address = currentStylist.address || "Condomínio Altos da Theodomiro 2, 2435";
   const addressDetails = currentStylist.addressDetails || "2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar";
-  const experienceYears = currentStylist.experienceYears || "Desde 2023 · Beleza & Visagismo";
+  const experienceYears = (currentStylist.experienceYears || "Desde 2023")
+    .replace(/[•·-]?\s*Visagismo/gi, '')
+    .replace(/[•·-]?\s*Beleza/gi, '')
+    .trim() || "Desde 2023";
 
   return (
     <section id="sobre" className="py-20 bg-[#FAF6F4] relative">

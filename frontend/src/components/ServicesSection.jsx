@@ -104,7 +104,7 @@ export function ServicesSection({ services, onSelectService }) {
                 Deseja combinar mais de um procedimento?
               </h4>
               <p className="text-xs sm:text-sm text-stone-600">
-                Você pode agendar sessões combinadas (ex: Design + Buço) diretamente pelo WhatsApp com desconto especial.
+                Você pode agendar sessões combinadas (ex: Design + Buço) diretamente pelo WhatsApp com a Letícia.
               </p>
             </div>
           </div>
