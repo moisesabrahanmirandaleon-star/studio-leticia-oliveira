@@ -1,9 +1,9 @@
 import React from 'react';
-import { Award, Sparkles, CheckCircle, Heart, MessageCircle, ShieldCheck, Smile } from 'lucide-react';
+import { Award, CheckCircle, Heart, MessageCircle, ShieldCheck, Smile } from 'lucide-react';
 import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 
 export function StylistSection({ stylists }) {
-  const defaultBio = `Prazer, sou a Letícia! ✨
+  const defaultBio = `Prazer, sou a Letícia!
 
 Tenho 25 anos e sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.
 
@@ -22,7 +22,7 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
     phone: '5551995037223'
   };
 
-  const bioText = mainStylist.bio || defaultBio;
+  const bioText = (mainStylist.bio || defaultBio).replace(/✨/g, '');
   const paragraphs = bioText
     .split('\n\n')
     .map((p) => p.trim())
@@ -51,8 +51,8 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
                 </div>
                 
                 {/* Badge inferior sobre a foto */}
-                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-[#B87F6C] text-white text-xs font-bold shadow-md border-2 border-white flex items-center gap-1.5 whitespace-nowrap">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-[#B87F6C] text-white text-xs font-bold shadow-md border-2 border-white flex items-center gap-2 whitespace-nowrap">
+                  <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover bg-[#FEF1E8]" />
                   <span>Desde 2023 • 25 Anos</span>
                 </div>
               </div>
@@ -102,14 +102,14 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
             {/* Biografia Formatada */}
             <div className="lg:col-span-7 space-y-4 text-left">
               
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-bold uppercase tracking-wider border border-[#DDBFB2]">
-                <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
-                Conheça a Sua Designer
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-bold uppercase tracking-wider border border-[#DDBFB2]">
+                <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover" />
+                <span>Conheça a Sua Designer</span>
               </div>
 
               <div>
                 <h3 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight">
-                  Prazer, sou a Letícia! ✨
+                  Prazer, sou a Letícia!
                 </h3>
                 <p className="text-xs uppercase tracking-widest font-bold text-[#A06654] mt-1.5">
                   Designer de Sobrancelhas • Visagismo & Estética Facial
@@ -125,7 +125,7 @@ Seja bem-vinda ao meu espaço! Será um prazer cuidar de você.`;
                   const isClosing = p.includes('Seja bem-vinda ao meu espaço');
 
                   // Se for a saudação que já está no título, pulamos para evitar repetição
-                  if (isGreeting && p.trim() === 'Prazer, sou a Letícia! ✨') {
+                  if (isGreeting && p.trim().startsWith('Prazer, sou a Letícia')) {
                     return null;
                   }
 

@@ -1,10 +1,13 @@
 // Service Worker para PWA do Studio Letícia Oliveira
-const CACHE_NAME = 'studio-leticia-v3';
+const CACHE_NAME = 'studio-leticia-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/favicon.svg',
+  '/favicon.ico',
+  '/logo.png',
+  '/logo-circle.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-512.png'
@@ -84,8 +87,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || '✨ Studio Letícia Oliveira';
   const options = {
     body: data.body || 'Um novo agendamento acabou de ser realizado!',
-    icon: data.icon || '/favicon.svg',
-    badge: '/favicon.svg',
+    icon: data.icon || '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     // Padrão de vibração potente no Android: vibra 300ms, pausa 100ms, vibra 300ms, pausa 100ms, vibra 400ms
     vibrate: [300, 100, 300, 100, 400],
     tag: data.tag || `studio-notif-${Date.now()}`,

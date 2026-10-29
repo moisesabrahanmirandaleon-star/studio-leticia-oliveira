@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Smartphone, X, CheckCircle, Share, PlusSquare, Sparkles } from 'lucide-react';
+import { Download, Smartphone, X, CheckCircle, Share, PlusSquare } from 'lucide-react';
 
 export function InstallPwaModal({ isOpen, onClose, deferredPrompt, onInstalled }) {
   const [isIOS, setIsIOS] = useState(false);
@@ -34,18 +34,18 @@ export function InstallPwaModal({ isOpen, onClose, deferredPrompt, onInstalled }
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col p-6 animate-slideUp">
         
-        {/* Header */}
+        {/* Header com Ícone Oficial do App */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#B87F6C] to-[#CCA08F] flex items-center justify-center text-white shadow-md">
-              <Smartphone className="w-6 h-6 text-amber-200" />
+            <div className="w-14 h-14 rounded-2xl overflow-hidden bg-[#FEF1E8] border border-[#EBDCD5] shadow-md shrink-0 p-1">
+              <img src="/icons/icon-192.png" alt="App Studio Letícia Oliveira" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
               <h3 className="font-serif font-bold text-stone-900 text-lg leading-tight">
                 Instalar Aplicativo
               </h3>
               <span className="text-xs text-[#B87F6C] font-semibold">
-                Studio Letícia Oliveira
+                Studio de Sobrancelhas • Letícia Oliveira
               </span>
             </div>
           </div>
@@ -100,7 +100,7 @@ export function InstallPwaModal({ isOpen, onClose, deferredPrompt, onInstalled }
             /* Instruções para iPhone / iOS */
             <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl space-y-2.5 text-xs text-stone-700">
               <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-600" />
+                <Smartphone className="w-4 h-4 text-[#B87F6C]" />
                 <span>Como instalar no iPhone (Safari):</span>
               </div>
               <div className="flex items-start gap-2">

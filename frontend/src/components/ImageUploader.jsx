@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Link as LinkIcon, Check, Loader2, X, Sparkles, Smartphone } from 'lucide-react';
+import { Upload, Image as ImageIcon, Link as LinkIcon, Check, Loader2, X, Smartphone } from 'lucide-react';
 import { compressImageFile, resolveImageUrl } from '../services/imageUtils';
 import { api } from '../services/api';
 
@@ -79,7 +79,7 @@ export function ImageUploader({
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <Sparkles className="w-3 h-3 text-amber-500" />
+              <ImageIcon className="w-3 h-3 text-[#B87F6C]" />
               <span>Modelos Prontos</span>
             </button>
           )}

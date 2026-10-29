@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Sparkles, ChevronRight, Check } from 'lucide-react';
+import { Clock, ChevronRight, Check } from 'lucide-react';
 
 export function ServicesSection({ services, onSelectService }) {
   const getBadge = (name) => {
@@ -18,9 +18,9 @@ export function ServicesSection({ services, onSelectService }) {
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-semibold uppercase tracking-wider mb-3 border border-[#EBDCD5]">
-            <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
-            Menu de Procedimentos
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-semibold uppercase tracking-wider mb-3 border border-[#EBDCD5]">
+            <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover" />
+            <span>Menu de Procedimentos</span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight">
             Serviços & Investimento
@@ -96,8 +96,8 @@ export function ServicesSection({ services, onSelectService }) {
         {/* Combo / Extra note banner */}
         <div className="mt-12 bg-gradient-to-r from-[#F5ECE8] to-[#FAF6F4] p-6 rounded-2xl border border-[#DDBFB2] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#B87F6C] text-white flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-[#EBDCD5] bg-[#FEF1E8] shrink-0">
+              <img src="/logo-circle.png" alt="Studio" className="w-full h-full object-cover" />
             </div>
             <div>
               <h4 className="font-bold text-stone-900 text-sm sm:text-base">

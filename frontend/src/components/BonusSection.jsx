@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Sparkles, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle, Maximize2 } from 'lucide-react';
+import { Gift, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle, Maximize2 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatBrazilianPhoneInput, formatPhoneDisplay } from '../utils/phoneUtils';
 import { resolveImageUrl } from '../services/imageUtils';
@@ -186,8 +186,8 @@ export function BonusSection({ onOpenBooking }) {
                 <div className="space-y-4">
                   {/* Badge de tipo de benefício e tempo */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#B87F6C] border border-[#EBDCD5] text-[11px] font-bold">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#B87F6C] border border-[#EBDCD5] text-[11px] font-bold">
+                      <Gift className="w-3.5 h-3.5 text-[#B87F6C]" />
                       {camp.badgeText || 'Especial'}
                     </span>
 
@@ -458,8 +458,8 @@ export function BonusSection({ onOpenBooking }) {
                     </div>
                     {/* Badge flutuante sobre a foto */}
                     <div className="absolute top-3 left-3">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[#B87F6C] text-[11px] font-bold shadow-sm">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[#B87F6C] text-[11px] font-bold shadow-sm">
+                        <Gift className="w-3.5 h-3.5 text-[#B87F6C]" />
                         {selectedCampaign.badgeText || 'Tempo Limitado'}
                       </span>
                     </div>

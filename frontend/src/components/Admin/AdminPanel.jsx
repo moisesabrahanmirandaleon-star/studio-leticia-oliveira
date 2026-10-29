@@ -15,7 +15,6 @@ import {
   DollarSign,
   TrendingUp,
   LogOut,
-  Sparkles,
   RefreshCw,
   Lock,
   Image as ImageIcon,
@@ -314,8 +313,8 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         const reg = await navigator.serviceWorker.ready;
         if (reg && reg.showNotification) {
           await reg.showNotification(title, {
-            icon: '/favicon.svg',
-            badge: '/favicon.svg',
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
             vibrate: [300, 100, 300, 100, 400],
             renotify: true,
             requireInteraction: true,
@@ -334,7 +333,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(title, {
-          icon: '/favicon.svg',
+          icon: '/icons/icon-192.png',
           ...options
         });
         return true;
@@ -1521,8 +1520,8 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#EBDCD5] px-4 sm:px-6 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#B87F6C] to-[#CCA08F] text-white flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-amber-100" />
+            <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#EBDCD5] bg-[#FEF1E8] shadow-xs flex-shrink-0">
+              <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -1600,8 +1599,8 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           className="fixed top-20 right-4 sm:right-6 z-50 max-w-sm sm:max-w-md w-full bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl p-4 sm:p-5 animate-slideDown"
         >
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
-              <Sparkles className="w-5 h-5 animate-spin" />
+            <div className="w-10 h-10 rounded-2xl bg-[#FEF1E8] border border-[#EBDCD5] overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
+              <img src="/logo-circle.png" alt="Studio" className="w-full h-full object-cover" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
@@ -1731,7 +1730,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#B87F6C] flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <Bell className="w-3.5 h-3.5 text-amber-500" />
                         {notif.title}
                         {notif.isNew && (
                           <span className="ml-1 px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[9px] font-bold uppercase tracking-wider animate-pulse">
@@ -1916,7 +1915,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       : 'border-transparent text-stone-500 hover:text-stone-800'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <Calendar className="w-4 h-4 text-[#B87F6C]" />
                   <span>Escala Mensal & Lotes</span>
                 </button>
 
@@ -2225,7 +2224,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   {/* Banner de Ajuda da Escala */}
                   <div className="p-4 bg-gradient-to-r from-amber-50 to-[#FAF6F4] rounded-2xl border border-amber-200 text-xs text-stone-800 space-y-2">
                     <div className="flex items-center gap-2 text-[#7E4E40] font-bold text-sm">
-                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      <Calendar className="w-4 h-4 text-[#B87F6C]" />
                       <span>Controle de Escala & Autonomia de Horários Mensais</span>
                     </div>
                     <p className="text-stone-600 leading-relaxed">
@@ -2340,7 +2339,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   {/* Atalhos Rápidos de Seleção no Calendário */}
                   <div className="flex flex-wrap items-center gap-2 p-2.5 bg-gradient-to-r from-[#FAF6F4] to-white rounded-2xl border border-[#EBDCD5] text-xs">
                     <span className="font-bold text-stone-700 flex items-center gap-1.5 text-xs">
-                      <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
+                      <CheckCircle className="w-3.5 h-3.5 text-[#B87F6C]" />
                       <span>Selecionar no Calendário:</span>
                     </span>
                     <button
@@ -3643,7 +3642,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       {/* Conteúdo Dinâmico do Site (Biografia, Headlines e Citações) */}
                       <div className="p-3 bg-white rounded-2xl border border-[#EBDCD5] space-y-3">
                         <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
+                          <Edit2 className="w-3.5 h-3.5 text-[#B87F6C]" />
                           <span>Textos da Página & Biografia (Edição Autônoma)</span>
                         </span>
 
@@ -3656,7 +3655,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               type="text"
                               value={profGreetingBadge}
                               onChange={(e) => setProfGreetingBadge(e.target.value)}
-                              placeholder="Ex: Prazer, sou a Letícia! ✨ • 25 Anos"
+                              placeholder="Ex: Prazer, sou a Letícia! • 25 Anos"
                               className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
                             />
                           </div>
@@ -3902,7 +3901,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                         <div className="p-3.5 rounded-2xl bg-white border border-[#EBDCD5] space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-                              <Sparkles className="w-4 h-4 text-amber-500" />
+                              <Bell className="w-4 h-4 text-amber-500" />
                               Notificações Push / Celular
                             </span>
                             <button
@@ -4334,14 +4333,14 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   {/* PRÉVIA AO VIVO DO CARD NA PÁGINA INICIAL */}
                   <div className="mt-3 pt-3 border-t border-[#EBDCD5]">
                     <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1 mb-2">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      <Eye className="w-3 h-3 text-amber-500" />
                       Visualização em Tempo Real (Como o cliente verá no site):
                     </span>
 
                     <div className="bg-white rounded-2xl p-4 border border-[#EBDCD5] shadow-xs space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF6F4] text-[#B87F6C] border border-[#EBDCD5] text-[10px] font-bold">
-                          <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                          <Gift className="w-2.5 h-2.5 text-amber-500" />
                           {campBadgeText || 'Tempo Limitado'}
                         </span>
                         {campEndDate && (
@@ -4542,7 +4541,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     >
                       <div className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-[#7E4E40]">
-                          <Sparkles className="w-4 h-4 text-[#B87F6C]" />
+                          <Calendar className="w-4 h-4 text-[#B87F6C]" />
                           Escala 2 Empregos (Ímpares & Pares Juntos)
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-[#B87F6C] text-white text-[10px] font-bold">
@@ -5332,7 +5331,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
             <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
               <div className="flex items-center justify-between border-b border-stone-100 pb-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#B87F6C]" />
+                  <MessageCircle className="w-4 h-4 text-[#B87F6C]" />
                   <h5 className="font-serif font-bold text-stone-900 text-base">
                     Modelo do Aviso Oficial de Confirmação
                   </h5>
@@ -5398,7 +5397,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
               activeTab === 'escala' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
             }`}
           >
-            <Sparkles className="w-5 h-5 mb-0.5" />
+            <Clock className="w-5 h-5 mb-0.5" />
             <span className="text-[10px]">Escala</span>
           </button>
 

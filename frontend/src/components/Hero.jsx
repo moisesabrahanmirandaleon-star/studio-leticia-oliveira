@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, MessageCircle, Star, Sparkles, CheckCircle2, Heart, ShieldCheck } from 'lucide-react';
+import { Calendar, MessageCircle, CheckCircle2, Heart, ShieldCheck } from 'lucide-react';
 import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 import { formatPhoneDisplay, buildWhatsAppUrl } from '../utils/phoneUtils';
 
@@ -14,7 +14,8 @@ export function Hero({ onOpenBooking, stylist }) {
   const displayInstagram = `@${cleanInstagramHandle}`;
   const instagramUrl = `https://instagram.com/${cleanInstagramHandle}`;
 
-  const greetingBadge = currentStylist.greetingBadge || "Prazer, sou a Letícia! ✨ • 25 Anos";
+  const rawGreeting = currentStylist.greetingBadge || "Prazer, sou a Letícia! • 25 Anos";
+  const cleanGreetingBadge = rawGreeting.replace(/✨/g, '').replace(/\s+/g, ' ').trim();
   const headline = currentStylist.headline || "Cuidando do seu olhar com amor, visagismo & dedicação.";
   const heroQuote = currentStylist.heroQuote || `"Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante."`;
 
@@ -22,11 +23,12 @@ export function Hero({ onOpenBooking, stylist }) {
   const cleanExperienceYears = rawExperienceYears
     .replace(/[•·-]?\s*Visagismo/gi, '')
     .replace(/[•·-]?\s*Beleza/gi, '')
+    .replace(/✨/g, '')
     .trim() || 'Desde 2023';
 
   const defaultBio = `Sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.\n\nFoi em 2023 que comecei a me enxergar nessa área e percebi que aquela paixão poderia se transformar em algo muito maior. Assim, dei início à minha caminhada no universo das sobrancelhas, descobrindo novas possibilidades de crescimento e realização.`;
 
-  const bioText = currentStylist.bio || defaultBio;
+  const bioText = (currentStylist.bio || defaultBio).replace(/✨/g, '');
   const bioParagraphs = bioText.split('\n\n').map(p => p.trim()).filter(Boolean);
 
   const displayPhoto = (currentStylist.photoUrl && currentStylist.photoUrl !== '/leticia-perfil.jpg')
@@ -44,9 +46,9 @@ export function Hero({ onOpenBooking, stylist }) {
           
           {/* Left: Letícia's Presentation & Biography */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-xs sm:text-sm font-semibold tracking-wide border border-[#DDBFB2]/60 shadow-sm">
-              <Sparkles className="w-4 h-4 text-[#B87F6C]" />
-              <span>{greetingBadge}</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-xs sm:text-sm font-semibold tracking-wide border border-[#DDBFB2]/60 shadow-sm">
+              <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-5 h-5 rounded-full object-cover border border-[#DDBFB2] bg-[#FEF1E8]" />
+              <span>{cleanGreetingBadge}</span>
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 tracking-tight leading-[1.2]">
@@ -128,8 +130,8 @@ export function Hero({ onOpenBooking, stylist }) {
               </div>
 
               {/* Floating Experiência Badge (Top-Left) */}
-              <div className="absolute top-5 -left-2 sm:-left-4 z-20 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/40 flex items-center gap-1.5 transform hover:scale-105 transition-transform">
-                <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+              <div className="absolute top-5 -left-2 sm:-left-4 z-20 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/40 flex items-center gap-2 transform hover:scale-105 transition-transform">
+                <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover bg-[#FEF1E8]" />
                 <span>{cleanExperienceYears}</span>
               </div>
 

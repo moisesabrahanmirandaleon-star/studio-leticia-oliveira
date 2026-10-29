@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Heart, MessageCircle, MapPin, Phone, Lock, Globe } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, Phone, Lock, Globe } from 'lucide-react';
 import { buildWhatsAppUrl } from '../utils/phoneUtils';
 
 export function Footer({ onOpenAdmin, stylist }) {
@@ -31,15 +31,15 @@ export function Footer({ onOpenAdmin, stylist }) {
           {/* Logo & Sobre */}
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#B87F6C] flex items-center justify-center text-white">
-                <Sparkles className="w-5 h-5 text-amber-100" />
+              <div className="w-12 h-12 rounded-full overflow-hidden shadow-md border border-[#CCA08F]/40 bg-[#FEF1E8] shrink-0">
+                <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
               </div>
               <div>
                 <span className="font-serif text-2xl font-bold tracking-tight text-white block leading-none">
                   {currentStylist.name || 'Letícia Oliveira'}
                 </span>
                 <span className="text-[11px] uppercase tracking-widest text-[#CCA08F] font-medium block mt-1">
-                  Studio de Beleza & Sobrancelhas
+                  Studio de Sobrancelhas
                 </span>
               </div>
             </div>

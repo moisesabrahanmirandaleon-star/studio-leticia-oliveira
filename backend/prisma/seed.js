@@ -45,7 +45,7 @@ async function main() {
   console.log(`👤 Usuário administrador criado: ${adminUser.email}`);
 
   // 3. Criar Estilista Principal (Letícia Oliveira)
-  const leticiaBio = `Prazer, sou a Letícia! ✨
+  const leticiaBio = `Prazer, sou a Letícia!
 
 Tenho 25 anos e sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.
 

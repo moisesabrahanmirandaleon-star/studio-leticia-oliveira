@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Calendar, Menu, X, Lock, Download, Smartphone } from 'lucide-react';
+import { Calendar, Menu, X, Lock, Download, Smartphone } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export function Navbar({ onOpenBooking, onOpenAdmin, onOpenInstall }) {
@@ -19,17 +19,22 @@ export function Navbar({ onOpenBooking, onOpenAdmin, onOpenInstall }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           
-          {/* Logo */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => scrollTo('hero')}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#B87F6C] to-[#CCA08F] flex items-center justify-center text-white shadow-sm">
-              <Sparkles className="w-5 h-5 text-amber-100" />
+          {/* Logo Oficial */}
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => scrollTo('hero')}>
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden shadow-sm border border-[#EBDCD5] bg-[#FEF1E8] shrink-0 transition-transform group-hover:scale-105">
+              <img
+                src="/logo-circle.png"
+                alt="Studio Letícia Oliveira"
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
             </div>
             <div>
-              <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-stone-900 block leading-none">
+              <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-stone-900 block leading-none group-hover:text-[#B87F6C] transition-colors">
                 Letícia Oliveira
               </span>
               <span className="text-[11px] uppercase tracking-widest text-[#A06654] font-medium block mt-1">
-                Studio de Beleza & Sobrancelhas
+                Studio de Sobrancelhas
               </span>
             </div>
           </div>
@@ -123,6 +128,21 @@ export function Navbar({ onOpenBooking, onOpenAdmin, onOpenInstall }) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-[#EBDCD5] px-4 pt-3 pb-6 space-y-3 shadow-xl animate-fadeIn">
+          {/* Header Mobile com Logo */}
+          <div className="flex items-center gap-3 pb-3 mb-2 border-b border-[#F5ECE8]">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-[#EBDCD5] bg-[#FEF1E8] shrink-0">
+              <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <span className="font-serif text-base font-bold text-stone-900 block leading-tight">
+                Studio Letícia Oliveira
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-[#A06654] font-medium block">
+                Studio de Sobrancelhas
+              </span>
+            </div>
+          </div>
+
           <button
             onClick={() => scrollTo('hero')}
             className="block w-full text-left py-2 text-base font-medium text-stone-700 hover:text-[#B87F6C]"

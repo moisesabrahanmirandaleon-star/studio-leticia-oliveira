@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Clock, ShieldCheck, Heart, Sparkles, Award, Coffee, CalendarCheck } from 'lucide-react';
+import { MapPin, Clock, ShieldCheck, Heart, Award, Coffee, CalendarCheck } from 'lucide-react';
 
 export function AboutSection({ onOpenBooking, stylist }) {
   const currentStylist = stylist || {};
@@ -93,8 +93,8 @@ export function AboutSection({ onOpenBooking, stylist }) {
               {/* Header card badge */}
               <div className="flex items-center justify-between pb-4 border-b border-[#EBDCD5]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#B87F6C] text-white flex items-center justify-center shadow-xs">
-                    <Sparkles className="w-5 h-5 text-amber-200" />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-[#EBDCD5] bg-[#FEF1E8] shadow-xs shrink-0">
+                    <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
                   </div>
                   <div>
                     <span className="font-serif font-bold text-stone-900 text-lg block leading-none">Studio {currentStylist.name || 'Letícia Oliveira'}</span>
@@ -144,7 +144,7 @@ export function AboutSection({ onOpenBooking, stylist }) {
                     onClick={onOpenBooking}
                     className="w-full py-3.5 rounded-2xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                   >
-                    <Sparkles className="w-4 h-4 text-amber-200" />
+                    <CalendarCheck className="w-4 h-4 text-amber-200" />
                     <span>Agendar Atendimento no Studio</span>
                   </button>
                 </div>

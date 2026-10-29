@@ -45,7 +45,7 @@ model Stylist {
   tiktok                  String?
   otherSocials            String?  // JSON string para outras redes adicionadas dinamicamente
   headline                String?  @default("Cuidando do seu olhar com amor, visagismo & dedicação.")
-  greetingBadge           String?  @default("Prazer, sou a Letícia! ✨ • 25 Anos")
+  greetingBadge           String?  @default("Prazer, sou a Letícia! • 25 Anos")
   heroQuote               String?  @default("Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante.")
   aboutTitle              String?  @default("Um refúgio de acolhimento e cuidado desenhado para realçar você.")
   aboutDescription        String?  @default("O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada.")

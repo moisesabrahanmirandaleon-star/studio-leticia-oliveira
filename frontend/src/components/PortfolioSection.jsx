@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   Eye,
   X,
   ChevronLeft,
@@ -10,7 +9,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Clock,
-  Heart
+  Heart,
+  CheckCircle2
 } from 'lucide-react';
 import { resolveImageUrl } from '../services/imageUtils';
 
@@ -98,9 +98,9 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
         
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#7E4E40] text-xs font-semibold tracking-wider uppercase mb-3 border border-[#DDBFB2]">
-            <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
-            Galeria de Transformações
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white text-[#7E4E40] text-xs font-semibold tracking-wider uppercase mb-3 border border-[#DDBFB2]">
+            <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover" />
+            <span>Galeria de Transformações</span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900">
             Resultados Reais & Impecáveis
@@ -201,7 +201,7 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
               </div>
               <div className="space-y-1 text-center sm:text-left">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold uppercase tracking-wider border border-emerald-500/30">
-                  <Sparkles className="w-3 h-3" />
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   Catálogo Integrado na Página
                 </div>
                 <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
@@ -289,9 +289,9 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
             {/* Informações e Ações do Procedimento */}
             <div className="md:w-1/2 p-6 sm:p-8 flex flex-col justify-between overflow-y-auto">
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-bold uppercase tracking-wider border border-[#DDBFB2]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
-                  {selectedItem.category}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF6F4] text-[#7E4E40] text-xs font-bold uppercase tracking-wider border border-[#DDBFB2]">
+                  <img src="/logo-circle.png" alt="Studio" className="w-4 h-4 rounded-full object-cover" />
+                  <span>{selectedItem.category}</span>
                 </div>
 
                 <div>

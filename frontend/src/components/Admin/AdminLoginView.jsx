@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Eye, EyeOff, AlertCircle, ArrowLeft, Sparkles, ShieldCheck } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function AdminLoginView({ onBackToClient, onSuccessLogin }) {
@@ -55,8 +55,8 @@ export function AdminLoginView({ onBackToClient, onSuccessLogin }) {
 
           {/* Logo & Título */}
           <div className="text-center mb-6 relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#B87F6C] to-[#CCA08F] flex items-center justify-center text-white mx-auto mb-3 shadow-md">
-              <Sparkles className="w-8 h-8 text-amber-100" />
+            <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#EBDCD5] bg-[#FEF1E8] mx-auto mb-3 shadow-md">
+              <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
             </div>
             
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">

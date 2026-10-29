@@ -9,7 +9,6 @@ import {
   Phone,
   CreditCard,
   CheckCircle2,
-  Sparkles,
   AlertCircle,
   MessageCircle,
   Building2,
@@ -73,7 +72,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
       const dayMonth = `${day}/${month}`;
 
       return (
-        `Combinado! ${dayMonth}, ${weekday}, às ${timeStr} ✨\n\n` +
+        `Combinado! ${dayMonth}, ${weekday}, às ${timeStr}\n\n` +
         `📍 Condomínio Altos da Theodomiro 2, 2435\n` +
         `➡️ 2ª portaria (meu prédio é o último da rua, são dois condomínios no local)\n` +
         `🏢 Bloco 6, Apê 652 – 5º andar\n\n` +
@@ -81,7 +80,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
         `⏰ Política de agendamento\n` +
         `Cancelamentos ou remarcações devem ser realizados com 24h de antecedência.\n\n` +
         `Após esse prazo, será cobrado 50% do valor do procedimento. Em caso de não comparecimento, o pagamento dos 50% também é obrigatório, referente ao horário reservado exclusivamente para você.\n\n` +
-        `✨ Essa política existe para que eu consiga organizar minha agenda e respeitar o horário de todas as clientes.\n\n` +
+        `Essa política existe para que eu consiga organizar minha agenda e respeitar o horário de todas as clientes.\n\n` +
         `Qualquer dúvida, me chama! 💖`
       );
     } catch {
@@ -250,9 +249,9 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
         {/* Header com barra de progresso */}
         <div className="bg-[#FAF6F4] p-5 border-b border-[#EBDCD5] relative">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#B87F6C] text-white flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-amber-200" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-[#EBDCD5] bg-[#FEF1E8] shadow-xs shrink-0">
+                <img src="/logo-circle.png" alt="Studio Letícia Oliveira" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h3 className="font-serif font-bold text-stone-900 text-base sm:text-lg">
@@ -774,7 +773,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                     • <strong>Cobrança de 50%:</strong> Após esse prazo ou em caso de <strong>não comparecimento</strong>, o pagamento dos <strong>50% do valor do procedimento</strong> é obrigatório, referente ao horário reservado exclusivamente para você.
                   </p>
                   <p className="text-[11px] text-[#A06654] italic">
-                    ✨ Essa política existe para que eu consiga organizar minha agenda e respeitar o horário de todas as clientes.
+                    Essa política existe para que eu consiga organizar minha agenda e respeitar o horário de todas as clientes.
                   </p>
                 </div>
 
@@ -801,7 +800,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
               formatNoticeMessage(selectedDate, selectedSlot?.startTime);
 
             const clientMsgToStudio = encodeURIComponent(
-              `Oi Letícia! ✨ Acabei de agendar meu horário pelo site:\n\n` +
+              `Oi Letícia! Acabei de agendar meu horário pelo site:\n\n` +
               `💆‍♀️ *Procedimento:* ${selectedService?.name}\n` +
               `📅 *Data:* ${selectedDate.split('-').reverse().join('/')} às ${selectedSlot?.startTime}\n` +
               `👤 *Nome:* ${clientName}\n` +
@@ -820,11 +819,11 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
 
                 <div>
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold uppercase tracking-wider border border-emerald-200">
-                    <Sparkles className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     Agendamento Confirmado!
                   </span>
                   <h4 className="font-serif text-2xl font-bold text-stone-900 mt-2">
-                    Tudo pronto para cuidar de você! ✨
+                    Tudo pronto para cuidar de você!
                   </h4>
                   <p className="text-stone-600 text-xs sm:text-sm mt-1 max-w-md mx-auto">
                     Olá <strong className="text-stone-900">{clientName}</strong>, seu horário para <strong>{selectedService?.name}</strong> foi reservado com sucesso!
@@ -896,7 +895,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                         <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
                       </span>
                     </div>
-                    <span>Avisar Letícia no WhatsApp Agora ✨</span>
+                    <span>Avisar Letícia no WhatsApp Agora</span>
                   </a>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -988,7 +987,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4 text-amber-200" />
+                    <CalendarIcon className="w-4 h-4 text-amber-200" />
                     <span>Finalizar Agendamento</span>
                   </>
                 )}
