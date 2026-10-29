@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Calendar,
@@ -39,7 +39,11 @@ import {
   Gift,
   Globe,
   Ban,
-  Unlock
+  Unlock,
+  Bell,
+  Volume2,
+  VolumeX,
+  Mail
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
@@ -185,6 +189,113 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [profCustomPolicy, setProfCustomPolicy] = useState('');
   const [profBufferMinutes, setProfBufferMinutes] = useState('0');
 
+  // --- SISTEMA DE NOTIFICAÇÕES EM TEMPO REAL DA DONA (SOM, PUSH & DRAWER) ---
+  const [soundNotificationsEnabled, setSoundNotificationsEnabled] = useState(() => {
+    return localStorage.getItem('studio_sound_notif') !== 'false';
+  });
+  const [browserNotificationsPermission, setBrowserNotificationsPermission] = useState(() => {
+    return typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'default';
+  });
+  const [showNotificationDrawer, setShowNotificationDrawer] = useState(false);
+  const [liveNotifications, setLiveNotifications] = useState([]);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [activeToastNotification, setActiveToastNotification] = useState(null);
+  const knownAppointmentIdsRef = useRef(new Set());
+  const knownBonusIdsRef = useRef(new Set());
+
+  // Sintetizador harmônico com Web Audio API (som de sino delicado de estética)
+  const playNotificationChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      // Nota 1: Sol 5 (784Hz)
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(784, now);
+      gain1.gain.setValueAtTime(0.22, now);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Nota 2: Dó 6 (1046.5Hz)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1046.5, now + 0.12);
+      gain2.gain.setValueAtTime(0.25, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.65);
+
+      // Nota 3: Mi 6 (1318.5Hz)
+      const osc3 = ctx.createOscillator();
+      const gain3 = ctx.createGain();
+      osc3.type = 'sine';
+      osc3.frequency.setValueAtTime(1318.5, now + 0.24);
+      gain3.gain.setValueAtTime(0.28, now + 0.24);
+      gain3.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+      osc3.connect(gain3);
+      gain3.connect(ctx.destination);
+      osc3.start(now + 0.24);
+      osc3.stop(now + 0.9);
+    } catch (e) {
+      console.warn('Web Audio indisponível:', e);
+    }
+  };
+
+  const toggleSoundNotification = () => {
+    const next = !soundNotificationsEnabled;
+    setSoundNotificationsEnabled(next);
+    localStorage.setItem('studio_sound_notif', String(next));
+    if (next) playNotificationChime();
+  };
+
+  const requestBrowserNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      alert('Seu navegador não suporta notificações na área de trabalho/celular.');
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      setBrowserNotificationsPermission(perm);
+      if (perm === 'granted') {
+        new Notification('✨ Studio Letícia Oliveira', {
+          body: 'Notificações ativadas! Você receberá avisos automáticos a cada novo agendamento.',
+          icon: '/pwa-192x192.png'
+        });
+        playNotificationChime();
+      }
+    } catch (err) {
+      console.error('Erro ao pedir permissão de notificação:', err);
+    }
+  };
+
+  const testNotification = () => {
+    playNotificationChime();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('✨ Teste de Notificação - Studio Letícia', {
+        body: 'O som e o alerta em tempo real estão funcionando perfeitamente no seu dispositivo!',
+        icon: '/pwa-192x192.png'
+      });
+    }
+    setActiveToastNotification({
+      id: Date.now(),
+      clientName: 'Cliente Exemplo (Teste)',
+      serviceName: 'Design com Henna & Visagismo',
+      date: new Date().toLocaleDateString('pt-BR'),
+      startTime: '14:30',
+      clientPhone: '5551995037223'
+    });
+  };
+
   // Auxiliares visuais
   const [copiedAppId, setCopiedAppId] = useState(null);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
@@ -222,17 +333,77 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     }
   }, [isAuthenticated, token, selectedDateFilter, stylistId]);
 
-  const loadAppointments = async () => {
-    setLoadingAppointments(true);
+  // Polling em tempo real a cada 20 segundos para detectar novos agendamentos e bônus
+  useEffect(() => {
+    if (!isAuthenticated || !token || !stylistId) return;
+    const interval = setInterval(() => {
+      loadAppointments(true);
+      loadBonusData(true);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, token, selectedDateFilter, stylistId, soundNotificationsEnabled]);
+
+  const loadAppointments = async (isBackgroundPoll = false) => {
+    if (!isBackgroundPoll) setLoadingAppointments(true);
     try {
       const filters = {};
       if (selectedDateFilter) filters.date = selectedDateFilter;
       const data = await api.getAppointments(filters, token);
-      setAppointments(data);
+      
+      // Detectar agendamentos recém-chegados
+      if (Array.isArray(data)) {
+        if (knownAppointmentIdsRef.current.size > 0) {
+          const newlyAdded = data.filter(a => !knownAppointmentIdsRef.current.has(a.id));
+          if (newlyAdded.length > 0) {
+            // Tocar aviso sonoro se ativado
+            if (soundNotificationsEnabled) {
+              playNotificationChime();
+            }
+
+            // Notificação de Sistema / Push
+            const latest = newlyAdded[0];
+            const cleanDt = latest.date ? String(latest.date).split('T')[0].split('-').reverse().join('/') : '';
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                new Notification(`✨ Novo Agendamento: ${latest.clientName}`, {
+                  body: `${latest.service?.name || 'Procedimento'} em ${cleanDt} às ${latest.startTime}`,
+                  icon: '/pwa-192x192.png'
+                });
+              } catch (e) {}
+            }
+
+            // Adicionar à central de notificações
+            const newNotifs = newlyAdded.map(a => ({
+              id: a.id,
+              title: 'Novo Agendamento Confirmado',
+              clientName: a.clientName,
+              phone: a.clientPhone,
+              details: `${a.service?.name || 'Procedimento'} • ${a.date ? String(a.date).split('T')[0].split('-').reverse().join('/') : ''} às ${a.startTime}`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }));
+
+            setLiveNotifications(prev => [...newNotifs, ...prev].slice(0, 30));
+            setUnreadNotificationsCount(prev => prev + newlyAdded.length);
+            setActiveToastNotification({
+              id: latest.id,
+              clientName: latest.clientName,
+              serviceName: latest.service?.name || 'Procedimento',
+              date: cleanDt,
+              startTime: latest.startTime,
+              clientPhone: latest.clientPhone
+            });
+          }
+        }
+
+        // Armazenar IDs conhecidos
+        data.forEach(a => knownAppointmentIdsRef.current.add(a.id));
+      }
+
+      setAppointments(data || []);
     } catch (err) {
       console.error('Erro ao carregar agendamentos:', err);
     } finally {
-      setLoadingAppointments(false);
+      if (!isBackgroundPoll) setLoadingAppointments(false);
     }
   };
 
@@ -276,7 +447,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       setProfPhotoUrl(data.photoUrl || '/leticia-perfil.jpg');
       setProfAddress(data.address || 'Condomínio Altos da Theodomiro 2, 2435');
       setProfAddressDetails(data.addressDetails || '2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar');
-      setProfInstagram(data.instagram || '@leticia_r.oliveira');
+      setProfInstagram(data.instagram || '@leticia_studiosobrancelhas');
       setProfFacebook(data.facebook || '');
       setProfTwitter(data.twitter || '');
       setProfTiktok(data.tiktok || '');
@@ -304,20 +475,52 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
     }
   };
 
-  const loadBonusData = async () => {
+  const loadBonusData = async (isBackgroundPoll = false) => {
     if (!token) return;
-    setLoadingBonus(true);
+    if (!isBackgroundPoll) setLoadingBonus(true);
     try {
       const [camps, apps] = await Promise.all([
         api.getAdminBonusCampaigns(token),
         api.getBonusApplications({}, token)
       ]);
       setBonusCampaigns(camps || []);
+
+      if (Array.isArray(apps)) {
+        if (knownBonusIdsRef.current.size > 0) {
+          const newApps = apps.filter(a => !knownBonusIdsRef.current.has(a.id) && a.status === 'PENDENTE');
+          if (newApps.length > 0) {
+            if (soundNotificationsEnabled) playNotificationChime();
+            const first = newApps[0];
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                new Notification(`🎁 Novo Pedido de Bônus: ${first.clientName}`, {
+                  body: `Campanha: ${first.campaign?.title || 'Promoção'} • Aguardando sua liberação`,
+                  icon: '/pwa-192x192.png'
+                });
+              } catch (e) {}
+            }
+            setLiveNotifications(prev => [
+              ...newApps.map(a => ({
+                id: `bonus-${a.id}`,
+                title: '🎁 Pedido de Bônus Recebido',
+                clientName: a.clientName,
+                phone: a.clientPhone,
+                details: `Bônus: ${a.campaign?.title || 'Campanha'} • WhatsApp: ${a.clientPhone}`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              })),
+              ...prev
+            ].slice(0, 30));
+            setUnreadNotificationsCount(prev => prev + newApps.length);
+          }
+        }
+        apps.forEach(a => knownBonusIdsRef.current.add(a.id));
+      }
+
       setBonusApplications(apps || []);
     } catch (err) {
       console.error('Erro ao carregar dados de bônus:', err);
     } finally {
-      setLoadingBonus(false);
+      if (!isBackgroundPoll) setLoadingBonus(false);
     }
   };
 
@@ -1031,10 +1234,29 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Botão de Notificações com Badge */}
+            <button
+              onClick={() => {
+                setShowNotificationDrawer(!showNotificationDrawer);
+                setUnreadNotificationsCount(0);
+              }}
+              className="relative p-2 sm:px-3 sm:py-2 rounded-xl text-stone-700 hover:text-stone-900 bg-[#FAF6F4] hover:bg-stone-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer border border-[#EBDCD5]"
+              title="Central de Notificações em Tempo Real da Dona"
+            >
+              <Bell className={`w-4 h-4 ${unreadNotificationsCount > 0 ? 'text-[#B87F6C] animate-bounce' : 'text-stone-500'}`} />
+              <span className="hidden sm:inline">Notificações</span>
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold leading-none animate-pulse shadow-md">
+                  {unreadNotificationsCount}
+                </span>
+              )}
+            </button>
+
             <button
               onClick={() => {
                 loadAppointments();
                 loadMonthSchedule();
+                loadBonusData();
               }}
               className="p-2 sm:px-3 sm:py-2 rounded-xl text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition-colors flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
               title="Atualizar dados da agenda e escala"
@@ -1063,6 +1285,181 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           </div>
         </div>
       </header>
+
+      {/* Toast Banner Flutuante de Novo Agendamento Recebido em Tempo Real */}
+      {activeToastNotification && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed top-20 right-4 sm:right-6 z-50 max-w-sm sm:max-w-md w-full bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl p-4 sm:p-5 animate-slideDown"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-xs">
+              <Sparkles className="w-5 h-5 animate-spin" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+                  Novo Agendamento Confirmado!
+                </span>
+                <button
+                  onClick={() => setActiveToastNotification(null)}
+                  className="text-stone-400 hover:text-stone-700 p-1 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-sm font-bold text-stone-900 mt-1 truncate">
+                {activeToastNotification.clientName}
+              </p>
+              <p className="text-xs text-stone-600 mt-0.5">
+                {activeToastNotification.serviceName} • {activeToastNotification.date} às {activeToastNotification.startTime}
+              </p>
+              <div className="mt-3 flex items-center gap-2">
+                <a
+                  href={`https://wa.me/${String(activeToastNotification.clientPhone).replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>Chamar no WhatsApp</span>
+                </a>
+                <button
+                  onClick={() => {
+                    setActiveTab('agenda');
+                    setActiveToastNotification(null);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer"
+                >
+                  Ver na Agenda
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Drawer Lateral: Central de Notificações */}
+      {showNotificationDrawer && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end animate-fadeIn"
+          onClick={() => setShowNotificationDrawer(false)}
+        >
+          <div
+            className="w-full max-w-sm sm:max-w-md bg-white h-full shadow-2xl flex flex-col p-5 overflow-y-auto animate-slideLeft"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-[#EBDCD5] pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#FAF6F4] text-[#B87F6C] flex items-center justify-center border border-[#EBDCD5] shadow-xs">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-stone-900 text-base">Notificações da Dona</h3>
+                  <p className="text-[11px] text-stone-500">Alertas ao vivo de agendamentos e promoções</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNotificationDrawer(false)}
+                className="p-1.5 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Painel Rápido de Configuração: Som & Push */}
+            <div className="my-3 p-3.5 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  {soundNotificationsEnabled ? (
+                    <Volume2 className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 text-stone-400" />
+                  )}
+                  <span className="font-bold text-stone-800">Sino de Notificação Sonora:</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleSoundNotification}
+                  className={`px-3 py-1 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                    soundNotificationsEnabled ? 'bg-emerald-600 text-white shadow-xs' : 'bg-stone-200 text-stone-600'
+                  }`}
+                >
+                  {soundNotificationsEnabled ? 'Ativado 🔔' : 'Silenciado 🔕'}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1 border-t border-[#EBDCD5]">
+                <span className="font-medium text-stone-600">Push no Celular/PC:</span>
+                <button
+                  type="button"
+                  onClick={requestBrowserNotificationPermission}
+                  className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold border border-stone-300 cursor-pointer"
+                >
+                  {browserNotificationsPermission === 'granted' ? 'Permitido ✅' : 'Ativar Push 📱'}
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de Alertas Recentes */}
+            <div className="flex-1 space-y-2.5 overflow-y-auto py-2">
+              {liveNotifications.length === 0 ? (
+                <div className="text-center py-16 text-stone-400">
+                  <Bell className="w-10 h-10 mx-auto mb-2 opacity-25" />
+                  <p className="text-xs font-medium">Nenhum novo agendamento na fila no momento.</p>
+                  <p className="text-[11px] text-stone-400 mt-1 max-w-xs mx-auto">
+                    Assim que uma cliente agendar pelo site, você ouvirá o sino de notificação e verá o alerta aqui!
+                  </p>
+                </div>
+              ) : (
+                liveNotifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    className="p-3.5 rounded-2xl border border-[#EBDCD5] bg-[#FAF6F4]/60 hover:bg-[#FAF6F4] transition-all space-y-1.5 shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-[#B87F6C] flex items-center gap-1">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        {notif.title}
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-mono">{notif.time}</span>
+                    </div>
+                    <p className="text-xs font-bold text-stone-900">{notif.clientName}</p>
+                    <p className="text-[11px] text-stone-600">{notif.details}</p>
+                    {notif.phone && (
+                      <div className="pt-1 flex items-center gap-2">
+                        <a
+                          href={`https://wa.me/${String(notif.phone).replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700 shadow-2xs cursor-pointer"
+                        >
+                          <MessageCircle className="w-3 h-3" />
+                          Conversar no WhatsApp
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Botão de Teste */}
+            <div className="border-t border-[#EBDCD5] pt-3 mt-auto">
+              <button
+                type="button"
+                onClick={testNotification}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-[#FAF6F4] border border-[#DDBFB2] text-stone-800 text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <Volume2 className="w-4 h-4 text-[#B87F6C]" />
+                <span>🔊 Testar Som e Alerta Agora</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conteúdo Principal Full Screen */}
       <main className="max-w-7xl mx-auto w-full p-3 sm:p-6 flex-1 pb-28 md:pb-12">
@@ -3005,6 +3402,95 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           onChange={(e) => setProfCustomPolicy(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
                         />
+                      </div>
+                    </div>
+
+                    {/* Seção 4: Canais de Notificação da Dona & Alertas Automáticos */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] space-y-4">
+                      <div className="flex items-center gap-2 text-stone-900 font-bold text-sm">
+                        <Bell className="w-4 h-4 text-[#B87F6C]" />
+                        <span>Canais de Notificação & Alertas da Dona</span>
+                      </div>
+
+                      <p className="text-xs text-stone-600 leading-relaxed">
+                        Configure e teste como você receberá avisos em tempo real a cada novo agendamento realizado pelas clientes.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                        {/* Canal 1: Som & Alerta no Painel */}
+                        <div className="p-3.5 rounded-2xl bg-white border border-[#EBDCD5] space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                              <Volume2 className="w-4 h-4 text-[#B87F6C]" />
+                              Sino Harmônico (Web Audio)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={toggleSoundNotification}
+                              className={`px-2.5 py-1 rounded-xl text-[11px] font-bold cursor-pointer ${
+                                soundNotificationsEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600'
+                              }`}
+                            >
+                              {soundNotificationsEnabled ? 'Ativado 🔔' : 'Mudo 🔕'}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-stone-500">
+                            Toca um sino harmônico e agradável de salão a cada novo agendamento que entra no site.
+                          </p>
+                        </div>
+
+                        {/* Canal 2: Push no Celular/Desktop */}
+                        <div className="p-3.5 rounded-2xl bg-white border border-[#EBDCD5] space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                              <Sparkles className="w-4 h-4 text-amber-500" />
+                              Notificações Push / Celular
+                            </span>
+                            <button
+                              type="button"
+                              onClick={requestBrowserNotificationPermission}
+                              className="px-2.5 py-1 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold border border-stone-300 cursor-pointer"
+                            >
+                              {browserNotificationsPermission === 'granted' ? 'Ativadas ✅' : 'Habilitar 📱'}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-stone-500">
+                            Exibe um pop-up de notificação no seu celular ou computador a cada agendamento recebido.
+                          </p>
+                        </div>
+
+                        {/* Canal 3: WhatsApp Direto */}
+                        <div className="p-3.5 rounded-2xl bg-white border border-[#EBDCD5] space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                            <MessageCircle className="w-4 h-4" />
+                            WhatsApp do Studio Ativo
+                          </div>
+                          <p className="text-[11px] text-stone-600">
+                            A cliente recebe um botão em destaque para te avisar no WhatsApp ({profPhone || '(51) 99503-7223'}) logo após confirmar.
+                          </p>
+                        </div>
+
+                        {/* Canal 4: E-mail da Dona & Google Agenda */}
+                        <div className="p-3.5 rounded-2xl bg-white border border-[#EBDCD5] space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800">
+                            <Mail className="w-4 h-4 text-[#B87F6C]" />
+                            E-mail & Google Calendar
+                          </div>
+                          <p className="text-[11px] text-stone-600">
+                            Destino oficial: <strong className="font-mono text-stone-800">estudioleticiaoliveira@gmail.com</strong> com lembretes automáticos.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <button
+                          type="button"
+                          onClick={testNotification}
+                          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 border border-[#DDBFB2] text-stone-700 text-xs font-bold shadow-2xs cursor-pointer"
+                        >
+                          <Volume2 className="w-4 h-4 text-[#B87F6C]" />
+                          <span>🔊 Testar Sino e Notificação Agora</span>
+                        </button>
                       </div>
                     </div>
 

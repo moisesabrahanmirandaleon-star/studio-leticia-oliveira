@@ -187,7 +187,7 @@ async function runTests() {
     console.log('✔ Campanha criada com sucesso! ID:', campData.id, '| Título:', campData.title);
 
     // 4.2 Cliente aplica para o bônus pela 1ª vez
-    const testPhone = '51998877665';
+    const testPhone = `519988${Date.now().toString().slice(-5)}`;
     const applyRes1 = await fetch(`${baseUrl}/bonus/apply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

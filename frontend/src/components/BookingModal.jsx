@@ -876,34 +876,53 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                 </div>
 
                 {/* Ações do Cliente (Simples, Elegante e Direto) */}
-                <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(noticeText);
-                      setCopiedNotice(true);
-                      setTimeout(() => setCopiedNotice(false), 3000);
-                    }}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs sm:text-sm font-bold shadow-md transition-all hover:scale-105 cursor-pointer"
+                <div className="pt-2 space-y-3">
+                  {/* Botão Primário de Destaque: Notificar Letícia via WhatsApp */}
+                  <a
+                    href={waDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-sm sm:text-base font-bold shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.99] cursor-pointer"
                   >
-                    {copiedNotice ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-300" />
-                        <span>Endereço e Horário Copiados!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 text-amber-200" />
-                        <span>Copiar Endereço e Detalhes</span>
-                      </>
-                    )}
-                  </button>
+                    <div className="relative">
+                      <MessageCircle className="w-5 h-5 fill-current" />
+                      <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+                      </span>
+                    </div>
+                    <span>Avisar Letícia no WhatsApp Agora ✨</span>
+                  </a>
 
-                  <button
-                    onClick={resetAndClose}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-                  >
-                    Concluir
-                  </button>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(noticeText);
+                        setCopiedNotice(true);
+                        setTimeout(() => setCopiedNotice(false), 3000);
+                      }}
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs sm:text-sm font-bold shadow-md transition-all hover:scale-105 cursor-pointer"
+                    >
+                      {copiedNotice ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-300" />
+                          <span>Endereço e Horário Copiados!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4 text-amber-200" />
+                          <span>Copiar Endereço e Detalhes</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={resetAndClose}
+                      className="w-full sm:w-auto px-6 py-3 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs sm:text-sm font-semibold transition-all cursor-pointer"
+                    >
+                      Concluir
+                    </button>
+                  </div>
                 </div>
 
                 <div className="pt-1">

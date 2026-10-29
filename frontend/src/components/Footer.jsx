@@ -5,7 +5,7 @@ export function Footer({ onOpenAdmin, stylist }) {
   const currentStylist = stylist || {};
   const phone = currentStylist.phone || '5551995037223';
   const cleanPhone = phone.replace(/\D/g, '');
-  const instagram = currentStylist.instagram || '@leticia_r.oliveira';
+  const instagram = currentStylist.instagram || '@leticia_studiosobrancelhas';
   const cleanInsta = instagram.replace('@', '').trim();
   const address = currentStylist.address || 'Condomínio Altos da Theodomiro 2, 2435';
   const addressDetails = currentStylist.addressDetails || '2ª Portaria • Bloco 6, Apê 652 (5º andar)';

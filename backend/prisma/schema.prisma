@@ -39,7 +39,7 @@ model Stylist {
   // Configurações e Autonomia do Studio (gerenciadas pela Letícia)
   address                 String?  @default("Condomínio Altos da Theodomiro 2, 2435")
   addressDetails          String?  @default("2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar")
-  instagram               String?  @default("@leticia_r.oliveira")
+  instagram               String?  @default("@leticia_studiosobrancelhas")
   facebook                String?
   twitter                 String?
   tiktok                  String?

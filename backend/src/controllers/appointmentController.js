@@ -2,6 +2,7 @@ import prisma from '../config/prisma.js';
 import { validateSlotAvailability } from '../services/availabilityService.js';
 import { whatsappService } from '../services/whatsappService.js';
 import { calendarSyncService } from '../services/calendarSyncService.js';
+import { emailService } from '../services/emailService.js';
 
 export async function createAppointment(req, res) {
   try {
@@ -87,6 +88,20 @@ export async function createAppointment(req, res) {
       paymentMethod: appointment.paymentMethod,
       stylistPhone: stylist.phone
     });
+
+    // 5.1 Disparar notificação por E-mail para a Dona do Studio
+    emailService.notifyNewAppointment({
+      clientName: appointment.clientName,
+      clientPhone: appointment.clientPhone,
+      clientEmail: appointment.clientEmail,
+      serviceName: appointment.service.name,
+      date: appointment.date,
+      startTime: appointment.startTime,
+      endTime: appointment.endTime,
+      paymentMethod: appointment.paymentMethod,
+      notes: appointment.notes,
+      price: appointment.service.price
+    }).catch(err => console.error('Erro ao disparar email de notificação:', err.message));
 
     // 6. Gerar o aviso oficial de agendamento e política de 24h para a cliente
     const clientNoticeMessage = whatsappService.formatClientNoticeMessage({
