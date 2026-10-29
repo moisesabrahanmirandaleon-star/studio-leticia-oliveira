@@ -35,11 +35,16 @@ import {
   Layers,
   Eye,
   EyeOff,
-  ArrowLeft
+  ArrowLeft,
+  Gift,
+  Globe,
+  Ban,
+  Unlock
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { AdminLoginView } from './AdminLoginView';
+import { ImageUploader } from '../ImageUploader';
 
 export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const { user, token, isAuthenticated, login, logout } = useAuth();
@@ -91,6 +96,41 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [batchNote, setBatchNote] = useState('Escala de Trabalho');
   const [applyingBatch, setApplyingBatch] = useState(false);
 
+  // --- BLOQUEIO DE MESES, SEMANAS E DIAS NA AGENDA ---
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [blockType, setBlockType] = useState('MONTH'); // 'MONTH' | 'WEEK' | 'RANGE' | 'DAYS'
+  const [blockTargetMonth, setBlockTargetMonth] = useState(today.getMonth() + 1);
+  const [blockTargetYear, setBlockTargetYear] = useState(today.getFullYear());
+  const [blockStartDate, setBlockStartDate] = useState('');
+  const [blockEndDate, setBlockEndDate] = useState('');
+  const [blockReason, setBlockReason] = useState('Mês Lotado / Sem atendimento');
+  const [blockIsOpen, setBlockIsOpen] = useState(false); // false = bloquear, true = liberar
+  const [blockingPeriod, setBlockingPeriod] = useState(false);
+
+  // --- DADOS DO SISTEMA DE BÔNUS & PROMOÇÕES ---
+  const [bonusCampaigns, setBonusCampaigns] = useState([]);
+  const [bonusApplications, setBonusApplications] = useState([]);
+  const [loadingBonus, setLoadingBonus] = useState(false);
+  const [bonusStatusFilter, setBonusStatusFilter] = useState('TODOS');
+  const [bonusSubTab, setBonusSubTab] = useState('solicitacoes'); // 'solicitacoes' | 'campanhas'
+  const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [editingCampaignId, setEditingCampaignId] = useState(null);
+  const [campTitle, setCampTitle] = useState('');
+  const [campDesc, setCampDesc] = useState('');
+  const [campDiscountType, setCampDiscountType] = useState('PERCENT'); // 'PERCENT', 'FIXED', 'GIFT'
+  const [campDiscountValue, setCampDiscountValue] = useState('20');
+  const [campGiftName, setCampGiftName] = useState('');
+  const [campActive, setCampActive] = useState(true);
+  const [campStartDate, setCampStartDate] = useState('');
+  const [campEndDate, setCampEndDate] = useState('');
+  const [campBadgeText, setCampBadgeText] = useState('Tempo Limitado');
+  const [campImageUrl, setCampImageUrl] = useState('');
+  const [savingCampaign, setSavingCampaign] = useState(false);
+
+  // Modal para nota administrativa ao recusar/aprovar bônus
+  const [noteModalApp, setNoteModalApp] = useState(null);
+  const [adminNoteInput, setAdminNoteInput] = useState('');
+
   // --- DADOS DE SERVIÇOS ---
   const [services, setServices] = useState([]);
   const [editingService, setEditingService] = useState(null);
@@ -112,7 +152,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [newPhotoDesc, setNewPhotoDesc] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // --- DADOS DE CONFIGURAÇÃO DO STUDIO / PERFIL ---
+  // --- DADOS DE CONFIGURAÇÃO DO STUDIO / PERFIL / BIOGRAFIA & REDES SOCIAIS ---
   const [stylistProfile, setStylistProfile] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
@@ -123,6 +163,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [profAddress, setProfAddress] = useState('');
   const [profAddressDetails, setProfAddressDetails] = useState('');
   const [profInstagram, setProfInstagram] = useState('');
+  const [profFacebook, setProfFacebook] = useState('');
+  const [profTwitter, setProfTwitter] = useState('');
+  const [profTiktok, setProfTiktok] = useState('');
+  const [customSocials, setCustomSocials] = useState([]); // [{ id, label, url }]
+  const [newCustomSocialLabel, setNewCustomSocialLabel] = useState('');
+  const [newCustomSocialUrl, setNewCustomSocialUrl] = useState('');
+
+  // Textos e Informações da Página (Biografia & Apresentação)
+  const [profHeadline, setProfHeadline] = useState('');
+  const [profGreetingBadge, setProfGreetingBadge] = useState('');
+  const [profHeroQuote, setProfHeroQuote] = useState('');
+  const [profAboutTitle, setProfAboutTitle] = useState('');
+  const [profAboutDescription, setProfAboutDescription] = useState('');
+  const [profExperienceYears, setProfExperienceYears] = useState('');
+
   const [profPixKey, setProfPixKey] = useState('');
   const [profPixType, setProfPixType] = useState('Telefone');
   const [profNoticeHours, setProfNoticeHours] = useState('24');
@@ -163,6 +218,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       loadPortfolio();
       loadStylistProfile();
       loadMonthSchedule(currentYear, currentMonth);
+      loadBonusData();
     }
   }, [isAuthenticated, token, selectedDateFilter, stylistId]);
 
@@ -221,6 +277,22 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       setProfAddress(data.address || 'Condomínio Altos da Theodomiro 2, 2435');
       setProfAddressDetails(data.addressDetails || '2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar');
       setProfInstagram(data.instagram || '@leticia_r.oliveira');
+      setProfFacebook(data.facebook || '');
+      setProfTwitter(data.twitter || '');
+      setProfTiktok(data.tiktok || '');
+      try {
+        setCustomSocials(data.otherSocials ? JSON.parse(data.otherSocials) : []);
+      } catch (e) {
+        setCustomSocials([]);
+      }
+
+      setProfHeadline(data.headline || 'Cuidando do seu olhar com amor, visagismo & dedicação.');
+      setProfGreetingBadge(data.greetingBadge || 'Prazer, sou a Letícia! ✨ • 25 Anos');
+      setProfHeroQuote(data.heroQuote || 'Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante.');
+      setProfAboutTitle(data.aboutTitle || 'Um refúgio de acolhimento e cuidado desenhado para realçar você.');
+      setProfAboutDescription(data.aboutDescription || 'O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada.');
+      setProfExperienceYears(data.experienceYears || 'Desde 2023 · Beleza & Visagismo');
+
       setProfPixKey(data.pixKey || '5551995037223');
       setProfPixType(data.pixType || 'Telefone');
       setProfNoticeHours(String(data.cancellationNoticeHours ?? 24));
@@ -229,6 +301,23 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       setProfBufferMinutes(String(data.bufferMinutes ?? 0));
     } catch (err) {
       console.error('Erro ao carregar perfil:', err);
+    }
+  };
+
+  const loadBonusData = async () => {
+    if (!token) return;
+    setLoadingBonus(true);
+    try {
+      const [camps, apps] = await Promise.all([
+        api.getAdminBonusCampaigns(token),
+        api.getBonusApplications({}, token)
+      ]);
+      setBonusCampaigns(camps || []);
+      setBonusApplications(apps || []);
+    } catch (err) {
+      console.error('Erro ao carregar dados de bônus:', err);
+    } finally {
+      setLoadingBonus(false);
     }
   };
 
@@ -500,6 +589,16 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           address: profAddress,
           addressDetails: profAddressDetails,
           instagram: profInstagram,
+          facebook: profFacebook,
+          twitter: profTwitter,
+          tiktok: profTiktok,
+          otherSocials: JSON.stringify(customSocials),
+          headline: profHeadline,
+          greetingBadge: profGreetingBadge,
+          heroQuote: profHeroQuote,
+          aboutTitle: profAboutTitle,
+          aboutDescription: profAboutDescription,
+          experienceYears: profExperienceYears,
           pixKey: profPixKey,
           pixType: profPixType,
           cancellationNoticeHours: Number(profNoticeHours),
@@ -509,7 +608,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         },
         token
       );
-      setProfileSuccessMsg('Configurações do Studio salvas com sucesso!');
+      setProfileSuccessMsg('Configurações e informações do site salvas com sucesso!');
       loadStylistProfile();
       if (onRefreshServices) onRefreshServices();
       setTimeout(() => setProfileSuccessMsg(''), 4000);
@@ -517,6 +616,154 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
       alert(err.message || 'Erro ao salvar configurações do Studio.');
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  // --- BLOQUEIO DE MESES, SEMANAS E DIAS ---
+  const handleApplyBlockPeriod = async () => {
+    setBlockingPeriod(true);
+    try {
+      const payload = {
+        stylistId,
+        type: blockType,
+        isOpen: blockIsOpen,
+        reason: blockReason || (blockIsOpen ? 'Atendimento confirmado' : 'Sem atendimento / Bloqueado')
+      };
+
+      if (blockType === 'MONTH') {
+        payload.year = Number(blockTargetYear);
+        payload.month = Number(blockTargetMonth);
+      } else if (blockType === 'WEEK' || blockType === 'RANGE') {
+        if (!blockStartDate || !blockEndDate) {
+          alert('Por favor, informe a data inicial e final do período.');
+          setBlockingPeriod(false);
+          return;
+        }
+        payload.startDate = blockStartDate;
+        payload.endDate = blockEndDate;
+      } else if (blockType === 'DAYS') {
+        if (selectedDates.size === 0) {
+          alert('Selecione ao menos um dia no calendário antes de aplicar.');
+          setBlockingPeriod(false);
+          return;
+        }
+        payload.dates = Array.from(selectedDates);
+      }
+
+      const res = await api.blockSchedulePeriod(payload, token);
+      alert(res.message || 'Bloqueio/Liberação aplicado com sucesso!');
+      setShowBlockModal(false);
+      setSelectedDates(new Set());
+      setMultiSelectMode(false);
+      loadMonthSchedule(currentYear, currentMonth);
+    } catch (err) {
+      alert(err.message || 'Erro ao aplicar bloqueio na agenda.');
+    } finally {
+      setBlockingPeriod(false);
+    }
+  };
+
+  // --- GESTÃO DE BÔNUS & PROMOÇÕES ---
+  const handleOpenNewCampaignModal = (campaign = null) => {
+    if (campaign) {
+      setEditingCampaignId(campaign.id);
+      setCampTitle(campaign.title || '');
+      setCampDesc(campaign.description || '');
+      setCampDiscountType(campaign.discountType || 'PERCENT');
+      setCampDiscountValue(String(campaign.discountValue ?? 20));
+      setCampGiftName(campaign.giftName || '');
+      setCampActive(campaign.active !== false);
+      setCampStartDate(campaign.startDate || '');
+      setCampEndDate(campaign.endDate || '');
+      setCampBadgeText(campaign.badgeText || 'Tempo Limitado');
+      setCampImageUrl(campaign.imageUrl || '');
+    } else {
+      setEditingCampaignId(null);
+      setCampTitle('');
+      setCampDesc('');
+      setCampDiscountType('PERCENT');
+      setCampDiscountValue('20');
+      setCampGiftName('');
+      setCampActive(true);
+      setCampStartDate('');
+      setCampEndDate('');
+      setCampBadgeText('Tempo Limitado');
+      setCampImageUrl('');
+    }
+    setShowCampaignModal(true);
+  };
+
+  const handleSaveCampaign = async (e) => {
+    e.preventDefault();
+    if (!campTitle.trim()) {
+      alert('Informe o título do bônus.');
+      return;
+    }
+    setSavingCampaign(true);
+    try {
+      const payload = {
+        title: campTitle.trim(),
+        description: campDesc.trim() || null,
+        discountType: campDiscountType,
+        discountValue: Number(campDiscountValue) || 0,
+        giftName: campGiftName.trim() || null,
+        active: Boolean(campActive),
+        startDate: campStartDate || null,
+        endDate: campEndDate || null,
+        badgeText: campBadgeText.trim() || 'Tempo Limitado',
+        imageUrl: campImageUrl.trim() || null
+      };
+
+      if (editingCampaignId) {
+        await api.updateBonusCampaign(editingCampaignId, payload, token);
+        alert('Campanha de bônus atualizada com sucesso!');
+      } else {
+        await api.createBonusCampaign(payload, token);
+        alert('Campanha de bônus criada e publicada com sucesso!');
+      }
+
+      setShowCampaignModal(false);
+      loadBonusData();
+    } catch (err) {
+      alert(err.message || 'Erro ao salvar campanha de bônus.');
+    } finally {
+      setSavingCampaign(false);
+    }
+  };
+
+  const handleToggleCampaignActive = async (campaign) => {
+    try {
+      await api.updateBonusCampaign(campaign.id, { active: !campaign.active }, token);
+      loadBonusData();
+    } catch (err) {
+      alert('Erro ao alterar status da campanha.');
+    }
+  };
+
+  const handleDeleteCampaign = async (id) => {
+    if (!confirm('Deseja realmente excluir esta campanha de bônus?')) return;
+    try {
+      await api.deleteBonusCampaign(id, token);
+      loadBonusData();
+    } catch (err) {
+      alert('Erro ao excluir campanha.');
+    }
+  };
+
+  const handleUpdateAppStatus = async (applicationId, status, note = null) => {
+    try {
+      const res = await api.updateBonusApplicationStatus(applicationId, { status, adminNote: note }, token);
+      alert(`Status atualizado para: ${status}!`);
+      loadBonusData();
+
+      // Se foi aprovado e gerou link do WhatsApp, oferecer para enviar imediatamente
+      if (res.whatsappNotifyUrl) {
+        if (confirm('Deseja enviar a mensagem de liberação do bônus para o WhatsApp da cliente agora?')) {
+          window.open(res.whatsappNotifyUrl, '_blank');
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Erro ao atualizar solicitação.');
     }
   };
 
@@ -885,6 +1132,20 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   Escala Mensal
                 </button>
                 <button
+                  onClick={() => setActiveTab('bonus')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
+                    activeTab === 'bonus' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
+                  }`}
+                >
+                  <Gift className="w-3 h-3 text-rose-500" />
+                  <span>Bônus</span>
+                  {bonusApplications.filter(a => a.status === 'PENDENTE').length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[9px] flex items-center justify-center font-bold">
+                      {bonusApplications.filter(a => a.status === 'PENDENTE').length}
+                    </span>
+                  )}
+                </button>
+                <button
                   onClick={() => setActiveTab('servicos')}
                   className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     activeTab === 'servicos' ? 'bg-[#B87F6C] text-white shadow-xs' : 'bg-white text-stone-600 border border-[#EBDCD5]'
@@ -942,6 +1203,23 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 >
                   <Sparkles className="w-4 h-4 text-amber-500" />
                   <span>Escala Mensal & Lotes</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('bonus')}
+                  className={`pb-3 px-2 text-xs sm:text-sm font-bold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 ${
+                    activeTab === 'bonus'
+                      ? 'border-[#B87F6C] text-[#B87F6C]'
+                      : 'border-transparent text-stone-500 hover:text-stone-800'
+                  }`}
+                >
+                  <Gift className="w-4 h-4 text-rose-500" />
+                  <span>Bônus & Promoções</span>
+                  {bonusApplications.filter(a => a.status === 'PENDENTE').length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                      {bonusApplications.filter(a => a.status === 'PENDENTE').length} pendente(s)
+                    </span>
+                  )}
                 </button>
 
                 <button
@@ -1288,10 +1566,27 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           setBatchPreset('ODD_DAYS');
                           setShowBatchModal(true);
                         }}
-                        className="px-3 py-2 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-2 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <Sliders className="w-3.5 h-3.5 text-amber-200" />
-                        <span>Gerador de Escala em Lote</span>
+                        <span>Gerador de Escala</span>
+                      </button>
+
+                      {/* Botão de Bloqueio de Mês / Semana */}
+                      <button
+                        onClick={() => {
+                          setBlockType('MONTH');
+                          setBlockTargetMonth(currentMonth);
+                          setBlockTargetYear(currentYear);
+                          setBlockIsOpen(false);
+                          setBlockReason(`Mês de ${getMonthName(currentMonth)} Lotado / Sem atendimento`);
+                          setShowBlockModal(true);
+                        }}
+                        className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Bloquear mês inteiro, semanas ou intervalos para não ter agendamentos"
+                      >
+                        <Ban className="w-3.5 h-3.5 text-rose-200" />
+                        <span>Bloquear Mês / Semana</span>
                       </button>
 
                       {/* Modo Multi-Seleção Livre */}
@@ -1300,20 +1595,20 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           setMultiSelectMode(!multiSelectMode);
                           setSelectedDates(new Set());
                         }}
-                        className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${
+                        className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 cursor-pointer ${
                           multiSelectMode
                             ? 'bg-amber-100 border-amber-300 text-amber-900'
                             : 'bg-white border-[#DDBFB2] text-stone-700 hover:bg-stone-50'
                         }`}
                       >
                         <Layers className="w-3.5 h-3.5" />
-                        <span>{multiSelectMode ? 'Sair da Seleção Livre' : 'Seleção Livre de Dias'}</span>
+                        <span>{multiSelectMode ? 'Sair da Seleção' : 'Seleção Livre'}</span>
                       </button>
 
                       {/* Restaurar Padrão */}
                       <button
                         onClick={handleResetMonth}
-                        className="px-2.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold transition-colors"
+                        className="px-2.5 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold transition-colors cursor-pointer"
                         title="Remover todas as regras deste mês e usar horário semanal"
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
@@ -1321,6 +1616,40 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       </button>
                     </div>
                   </div>
+
+                  {/* Banner de Aviso de Mês Inteiro Bloqueado */}
+                  {monthDays.length > 0 && monthDays.every(d => !d.isOpen) && (
+                    <div className="p-4 bg-rose-50 border-2 border-rose-300 text-rose-950 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-bold animate-fadeIn">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0">
+                          <Ban className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-extrabold block text-rose-900">
+                            Mês de {getMonthName(currentMonth)} Totalmente BLOQUEADO!
+                          </span>
+                          <span className="font-medium text-rose-700 block text-[11px] mt-0.5">
+                            Nenhum cliente conseguirá agendar horários neste mês. Motivo configurado: "{monthDays[0]?.note || 'Sem atendimento'}"
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setBlockType('MONTH');
+                          setBlockTargetMonth(currentMonth);
+                          setBlockTargetYear(currentYear);
+                          setBlockIsOpen(true);
+                          setBlockReason('Atendimento liberado');
+                          setShowBlockModal(true);
+                        }}
+                        className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold shrink-0 cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      >
+                        <Unlock className="w-3.5 h-3.5" />
+                        <span>Desbloquear / Liberar Mês</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Barra flutuante quando datas estiverem selecionadas no modo multi-select */}
                   {multiSelectMode && selectedDates.size > 0 && (
@@ -1493,6 +1822,370 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             </div>
                           );
                         })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* ABA NOVO: BÔNUS & PROMOÇÕES ESPECIAIS (APROVAÇÃO & 15 DIAS) */}
+              {/* ========================================================= */}
+              {activeTab === 'bonus' && (
+                <div className="space-y-6">
+                  {/* Banner de Apresentação */}
+                  <div className="p-4 sm:p-5 bg-gradient-to-r from-rose-50 via-[#FAF6F4] to-amber-50 rounded-2xl border border-rose-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-rose-800 font-bold text-sm">
+                        <Gift className="w-5 h-5 text-rose-600" />
+                        <span>Gestão de Bônus & Promoções Exclusivas</span>
+                      </div>
+                      <p className="text-stone-600 text-xs leading-relaxed max-w-2xl">
+                        Leticia, lance campanhas de bônus e descontos dinâmicos para a página inicial. As clientes solicitam o bônus no site e você aprova aqui no painel. O sistema aplica automaticamente a <strong>trava de segurança de 1 solicitação a cada 15 dias</strong> por cliente!
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenNewCampaignModal()}
+                        className="px-4 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-sm flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
+                      >
+                        <Plus className="w-4 h-4 text-amber-200" />
+                        <span>Criar Nova Campanha de Bônus</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sub-abas de Bônus: Solicitações vs Campanhas */}
+                  <div className="flex items-center justify-between border-b border-[#EBDCD5] pb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setBonusSubTab('solicitacoes')}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                          bonusSubTab === 'solicitacoes'
+                            ? 'bg-[#B87F6C] text-white shadow-xs'
+                            : 'bg-white text-stone-600 border border-[#EBDCD5] hover:bg-stone-50'
+                        }`}
+                      >
+                        <span>Fila de Aprovação de Clientes</span>
+                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                          bonusSubTab === 'solicitacoes' ? 'bg-white text-[#7E4E40]' : 'bg-rose-100 text-rose-700'
+                        }`}>
+                          {bonusApplications.filter(a => a.status === 'PENDENTE').length} pendente(s)
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => setBonusSubTab('campanhas')}
+                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                          bonusSubTab === 'campanhas'
+                            ? 'bg-[#B87F6C] text-white shadow-xs'
+                            : 'bg-white text-stone-600 border border-[#EBDCD5] hover:bg-stone-50'
+                        }`}
+                      >
+                        <Tag className="w-3.5 h-3.5" />
+                        <span>Campanhas Ativas & Criadas ({bonusCampaigns.length})</span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={loadBonusData}
+                      className="p-2 rounded-xl text-stone-500 hover:text-stone-800 hover:bg-white text-xs flex items-center gap-1 cursor-pointer"
+                      title="Recarregar solicitações"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Atualizar</span>
+                    </button>
+                  </div>
+
+                  {/* SUB-ABA 1: SOLICITAÇÕES DE CLIENTES */}
+                  {bonusSubTab === 'solicitacoes' && (
+                    <div className="space-y-4">
+                      {/* Filtros de Status */}
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                        {['TODOS', 'PENDENTE', 'APROVADO', 'UTILIZADO', 'RECUSADO'].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => setBonusStatusFilter(st)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                              bonusStatusFilter === st
+                                ? 'bg-[#7E4E40] text-white shadow-xs'
+                                : 'bg-white text-stone-600 border border-[#EBDCD5] hover:bg-stone-50'
+                            }`}
+                          >
+                            {st === 'TODOS' && 'Todas as Solicitações'}
+                            {st === 'PENDENTE' && `⏳ Pendentes (${bonusApplications.filter(a => a.status === 'PENDENTE').length})`}
+                            {st === 'APROVADO' && `✓ Aprovadas (${bonusApplications.filter(a => a.status === 'APROVADO').length})`}
+                            {st === 'UTILIZADO' && 'Utilizadas'}
+                            {st === 'RECUSADO' && 'Recusadas'}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Lista de Solicitações */}
+                      {loadingBonus ? (
+                        <div className="py-12 text-center text-xs text-stone-500">
+                          <RefreshCw className="w-6 h-6 text-[#B87F6C] animate-spin mx-auto mb-2" />
+                          Carregando solicitações de bônus...
+                        </div>
+                      ) : bonusApplications.filter(a => bonusStatusFilter === 'TODOS' ? true : a.status === bonusStatusFilter).length === 0 ? (
+                        <div className="p-8 text-center bg-white rounded-3xl border border-[#EBDCD5] space-y-2">
+                          <Gift className="w-10 h-10 text-stone-300 mx-auto" />
+                          <h6 className="font-serif font-bold text-stone-800 text-sm">
+                            Nenhuma solicitação encontrada
+                          </h6>
+                          <p className="text-stone-500 text-xs">
+                            Quando as clientes solicitarem bônus na página principal, elas aparecerão listadas aqui para sua aprovação!
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {bonusApplications
+                            .filter(a => bonusStatusFilter === 'TODOS' ? true : a.status === bonusStatusFilter)
+                            .map((app) => {
+                              const isPending = app.status === 'PENDENTE';
+                              const isApproved = app.status === 'APROVADO';
+                              const isUsed = app.status === 'UTILIZADO';
+                              const isRejected = app.status === 'RECUSADO';
+
+                              return (
+                                <div
+                                  key={app.id}
+                                  className={`p-4 sm:p-5 rounded-2xl border transition-all space-y-3 ${
+                                    isPending
+                                      ? 'bg-amber-50/70 border-amber-300 shadow-sm'
+                                      : isApproved
+                                      ? 'bg-emerald-50/50 border-emerald-300 shadow-2xs'
+                                      : 'bg-white border-[#EBDCD5]'
+                                  }`}
+                                >
+                                  {/* Top header do card */}
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                      <span className="text-[10px] font-bold uppercase text-stone-500 block">
+                                        Campanha Solicitada:
+                                      </span>
+                                      <strong className="text-stone-900 text-sm font-serif font-bold block">
+                                        {app.campaign?.title || 'Bônus Especial'}
+                                      </strong>
+                                      {app.serviceName && (
+                                        <span className="text-[11px] text-[#A06654] font-medium">
+                                          Procedimento: {app.serviceName}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Badge de status */}
+                                    <span
+                                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                        isPending
+                                          ? 'bg-amber-500 text-white'
+                                          : isApproved
+                                          ? 'bg-emerald-600 text-white'
+                                          : isUsed
+                                          ? 'bg-stone-500 text-white'
+                                          : 'bg-rose-500 text-white'
+                                      }`}
+                                    >
+                                      {isPending && 'Pendente'}
+                                      {isApproved && 'Aprovado'}
+                                      {isUsed && 'Utilizado'}
+                                      {isRejected && 'Recusado'}
+                                    </span>
+                                  </div>
+
+                                  {/* Dados da Cliente */}
+                                  <div className="p-3 bg-white/90 rounded-xl border border-stone-200 text-xs text-stone-700 space-y-1">
+                                    <p className="flex items-center gap-2">
+                                      <User className="w-3.5 h-3.5 text-[#B87F6C]" />
+                                      <strong>{app.clientName}</strong>
+                                    </p>
+                                    <p className="flex items-center gap-2">
+                                      <Phone className="w-3.5 h-3.5 text-[#B87F6C]" />
+                                      <span>{app.clientPhone}</span>
+                                      <a
+                                        href={`https://wa.me/55${app.clientPhone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-emerald-700 hover:text-emerald-800 text-[11px] font-bold ml-1 inline-flex items-center gap-0.5"
+                                      >
+                                        <MessageCircle className="w-3 h-3 text-emerald-600" />
+                                        <span>Abrir WhatsApp</span>
+                                      </a>
+                                    </p>
+                                    <div className="flex items-center justify-between pt-1 border-t border-stone-100 text-[11px] text-stone-500">
+                                      <span>Código: <strong className="font-mono text-[#7E4E40]">{app.code}</strong></span>
+                                      <span>{new Date(app.appliedAt).toLocaleDateString('pt-BR')} às {new Date(app.appliedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                  </div>
+
+                                  {app.adminNote && (
+                                    <p className="text-[11px] text-stone-500 italic bg-[#FAF6F4] p-2 rounded-lg">
+                                      Nota: "{app.adminNote}"
+                                    </p>
+                                  )}
+
+                                  {/* Ações de Liberação e Gestão */}
+                                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                                    {isPending && (
+                                      <>
+                                        <button
+                                          onClick={() => handleUpdateAppStatus(app.id, 'APROVADO')}
+                                          className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                                        >
+                                          <Check className="w-3.5 h-3.5" />
+                                          <span>Aprovar Bônus</span>
+                                        </button>
+
+                                        <button
+                                          onClick={() => {
+                                            setNoteModalApp(app);
+                                            setAdminNoteInput('');
+                                          }}
+                                          className="py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-all cursor-pointer"
+                                        >
+                                          Recusar
+                                        </button>
+                                      </>
+                                    )}
+
+                                    {isApproved && (
+                                      <>
+                                        <button
+                                          onClick={() => handleUpdateAppStatus(app.id, 'UTILIZADO')}
+                                          className="flex-1 py-2 px-3 rounded-xl bg-stone-800 hover:bg-stone-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                                        >
+                                          <Check className="w-3.5 h-3.5" />
+                                          <span>Marcar como Utilizado no Atendimento</span>
+                                        </button>
+
+                                        <a
+                                          href={`https://wa.me/55${app.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                            `Olá ${app.clientName}! 💖\nSeu bônus *${app.campaign?.title}* está LIBERADO no Studio Letícia Oliveira!\n✨ Código: ${app.code}\nApresente no seu atendimento!`
+                                          )}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="py-2 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1"
+                                        >
+                                          <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                          <span>WhatsApp</span>
+                                        </a>
+                                      </>
+                                    )}
+
+                                    {isUsed && (
+                                      <span className="text-[11px] text-stone-500 font-medium">
+                                        ✓ Este bônus já foi resgatado pela cliente.
+                                      </span>
+                                    )}
+
+                                    {isRejected && (
+                                      <button
+                                        onClick={() => handleUpdateAppStatus(app.id, 'APROVADO')}
+                                        className="py-1.5 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] font-bold"
+                                      >
+                                        Reverter para Aprovado
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SUB-ABA 2: CAMPANHAS DE BÔNUS CRIADAS */}
+                  {bonusSubTab === 'campanhas' && (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {bonusCampaigns.map((camp) => (
+                          <div
+                            key={camp.id}
+                            className="bg-white rounded-2xl p-5 border border-[#EBDCD5] shadow-xs flex flex-col justify-between space-y-3"
+                          >
+                            <div className="space-y-2">
+                              {/* Header com Toggle Ativo/Oculto */}
+                              <div className="flex items-center justify-between">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF6F4] text-[#B87F6C] text-[10px] font-bold">
+                                  {camp.badgeText || 'Promoção'}
+                                </span>
+
+                                <button
+                                  onClick={() => handleToggleCampaignActive(camp)}
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all ${
+                                    camp.active
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                      : 'bg-stone-100 text-stone-500 border border-stone-200'
+                                  }`}
+                                  title="Clique para ativar ou ocultar da página principal"
+                                >
+                                  {camp.active ? <Eye className="w-3 h-3 text-emerald-600" /> : <EyeOff className="w-3 h-3 text-stone-400" />}
+                                  <span>{camp.active ? 'Ativo no Site' : 'Oculto'}</span>
+                                </button>
+                              </div>
+
+                              {camp.imageUrl && (
+                                <div className="w-full h-28 rounded-xl overflow-hidden border border-stone-200">
+                                  <img src={camp.imageUrl} alt={camp.title} className="w-full h-full object-cover" />
+                                </div>
+                              )}
+
+                              <h6 className="font-serif font-bold text-stone-900 text-base leading-snug">
+                                {camp.title}
+                              </h6>
+
+                              {camp.description && (
+                                <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                                  {camp.description}
+                                </p>
+                              )}
+
+                              <div className="p-2.5 bg-[#FAF6F4] rounded-xl border border-[#EBDCD5] text-xs">
+                                <span className="text-[10px] uppercase font-bold text-stone-500 block">Vantagem:</span>
+                                <strong className="text-[#7E4E40]">
+                                  {camp.discountType === 'PERCENT' && `${camp.discountValue}% OFF`}
+                                  {camp.discountType === 'FIXED' && `R$ ${camp.discountValue} OFF`}
+                                  {camp.discountType === 'GIFT' && (camp.giftName || 'Brinde')}
+                                </strong>
+                              </div>
+
+                              {/* Validade */}
+                              <div className="text-[11px] text-stone-500">
+                                {camp.endDate ? (
+                                  <span>Válido até: <strong>{camp.endDate.split('-').reverse().join('/')}</strong></span>
+                                ) : (
+                                  <span>Sem data limite (Ativo contínuo)</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Ações */}
+                            <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+                              <span className="text-[10px] text-stone-400">
+                                {camp._count?.applications || 0} solicitações
+                              </span>
+
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleOpenNewCampaignModal(camp)}
+                                  className="p-1.5 rounded-lg text-stone-600 hover:text-[#B87F6C] hover:bg-[#FAF6F4] transition-colors"
+                                  title="Editar campanha"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCampaign(camp.id)}
+                                  className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                                  title="Excluir campanha"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1707,7 +2400,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       Adicionar Nova Foto de Trabalho / Cliente à Galeria
                     </h5>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
                           Título do Procedimento *
@@ -1739,39 +2432,19 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           <option value="Outros">Outros Procedimentos</option>
                         </select>
                       </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                          Link da Foto (URL ou arquivo público) *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={newPhotoUrl}
-                          onChange={(e) => setNewPhotoUrl(e.target.value)}
-                          placeholder="https://images.unsplash.com/... ou /foto.jpg"
-                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
-                        />
-                      </div>
                     </div>
 
-                    {/* Preview da foto se houver URL */}
-                    {newPhotoUrl && (
-                      <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-stone-200">
-                        <img
-                          src={newPhotoUrl}
-                          alt="Pré-visualização"
-                          className="w-14 h-14 object-cover rounded-lg border border-stone-200"
-                          onError={(e) => {
-                            e.target.src = 'https://placehold.co/100x100?text=Erro+Imagem';
-                          }}
-                        />
-                        <div className="text-xs text-stone-600">
-                          <strong className="block text-stone-800">Pré-visualização da Foto:</strong>
-                          <span>{newPhotoTitle || 'Sem título ainda'}</span>
-                        </div>
-                      </div>
-                    )}
+                    {/* Componente Dinâmico de Upload da Foto (Celular, Câmera ou Google Fotos) */}
+                    <div className="bg-white p-3.5 rounded-2xl border border-[#EBDCD5]">
+                      <ImageUploader
+                        value={newPhotoUrl}
+                        onChange={setNewPhotoUrl}
+                        token={token}
+                        label="Foto do Procedimento / Cliente (Celular, Google Fotos ou Arquivo) *"
+                        placeholder="https://images.unsplash.com/... ou selecione do celular"
+                        recommendedSize="Toque para abrir a galeria do celular, Google Fotos ou tirar foto. A imagem é comprimida automaticamente!"
+                      />
+                    </div>
 
                     <div>
                       <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
@@ -1943,7 +2616,19 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                         <span>Identificação & Redes Sociais</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Foto de Perfil da Letícia */}
+                      <div className="bg-white p-3.5 rounded-2xl border border-[#EBDCD5]">
+                        <ImageUploader
+                          value={profPhotoUrl}
+                          onChange={setProfPhotoUrl}
+                          token={token}
+                          label="Foto de Perfil & Apresentação (Celular, Câmera ou Google Fotos)"
+                          placeholder="Link da sua foto ou selecione do celular"
+                          recommendedSize="Esta foto aparecerá em destaque na apresentação principal do site!"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
                             Seu Nome Profissional
@@ -1959,40 +2644,234 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                         <div>
                           <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                            WhatsApp Comercial (com DDD)
+                            Tempo de Experiência / Badge
                           </label>
                           <input
                             type="text"
-                            required
-                            value={profPhone}
-                            onChange={(e) => setProfPhone(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                            Instagram do Studio
-                          </label>
-                          <input
-                            type="text"
-                            value={profInstagram}
-                            onChange={(e) => setProfInstagram(e.target.value)}
+                            value={profExperienceYears}
+                            onChange={(e) => setProfExperienceYears(e.target.value)}
+                            placeholder="Ex: Desde 2023 · Beleza & Visagismo"
                             className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
                           />
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                          Apresentação / Bio no Site
-                        </label>
-                        <textarea
-                          rows={4}
-                          value={profBio}
-                          onChange={(e) => setProfBio(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none leading-relaxed"
-                        />
+                      {/* Redes Sociais Completas */}
+                      <div className="p-3 bg-white rounded-2xl border border-[#EBDCD5] space-y-3">
+                        <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 text-[#B87F6C]" />
+                          <span>Redes Sociais & Canais de Atendimento</span>
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              WhatsApp Comercial (com DDD) *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={profPhone}
+                              onChange={(e) => setProfPhone(e.target.value)}
+                              placeholder="(51) 99503-7223"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Instagram do Studio
+                            </label>
+                            <input
+                              type="text"
+                              value={profInstagram}
+                              onChange={(e) => setProfInstagram(e.target.value)}
+                              placeholder="@leticia_r.oliveira"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Facebook (Página ou Perfil)
+                            </label>
+                            <input
+                              type="text"
+                              value={profFacebook}
+                              onChange={(e) => setProfFacebook(e.target.value)}
+                              placeholder="facebook.com/studioleticia ou link"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Twitter / X
+                            </label>
+                            <input
+                              type="text"
+                              value={profTwitter}
+                              onChange={(e) => setProfTwitter(e.target.value)}
+                              placeholder="@studioleticia"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              TikTok do Studio
+                            </label>
+                            <input
+                              type="text"
+                              value={profTiktok}
+                              onChange={(e) => setProfTiktok(e.target.value)}
+                              placeholder="@leticia_oliveira_studio"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Redes Sociais Adicionais / Personalizadas */}
+                        <div className="pt-2 border-t border-[#F5ECE8] space-y-2">
+                          <span className="text-[11px] font-bold text-stone-700 block">
+                            Outras Redes Sociais / Links Personalizados:
+                          </span>
+
+                          {customSocials.map((soc, idx) => (
+                            <div key={idx} className="flex items-center gap-2 bg-[#FAF6F4] p-2 rounded-xl border border-[#EBDCD5]">
+                              <span className="text-xs font-bold text-stone-800 w-28 truncate">{soc.label}</span>
+                              <span className="text-xs text-stone-500 flex-1 truncate">{soc.url}</span>
+                              <button
+                                type="button"
+                                onClick={() => setCustomSocials(customSocials.filter((_, i) => i !== idx))}
+                                className="p-1 rounded text-rose-500 hover:bg-rose-100"
+                                title="Remover rede"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+
+                          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                            <input
+                              type="text"
+                              value={newCustomSocialLabel}
+                              onChange={(e) => setNewCustomSocialLabel(e.target.value)}
+                              placeholder="Nome (Ex: Threads, Pinterest)"
+                              className="px-3 py-1.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none sm:w-1/3"
+                            />
+                            <input
+                              type="text"
+                              value={newCustomSocialUrl}
+                              onChange={(e) => setNewCustomSocialUrl(e.target.value)}
+                              placeholder="URL (Ex: https://threads.net/@leticia)"
+                              className="px-3 py-1.5 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none flex-1"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (newCustomSocialLabel.trim() && newCustomSocialUrl.trim()) {
+                                  setCustomSocials([...customSocials, { label: newCustomSocialLabel.trim(), url: newCustomSocialUrl.trim() }]);
+                                  setNewCustomSocialLabel('');
+                                  setNewCustomSocialUrl('');
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-stone-800 text-white font-bold text-xs hover:bg-stone-900 cursor-pointer"
+                            >
+                              + Adicionar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Conteúdo Dinâmico do Site (Biografia, Headlines e Citações) */}
+                      <div className="p-3 bg-white rounded-2xl border border-[#EBDCD5] space-y-3">
+                        <span className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#B87F6C]" />
+                          <span>Textos da Página & Biografia (Edição Autônoma)</span>
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Badge de Boas-Vindas (Topo do Site)
+                            </label>
+                            <input
+                              type="text"
+                              value={profGreetingBadge}
+                              onChange={(e) => setProfGreetingBadge(e.target.value)}
+                              placeholder="Ex: Prazer, sou a Letícia! ✨ • 25 Anos"
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Título Principal (Headline)
+                            </label>
+                            <input
+                              type="text"
+                              value={profHeadline}
+                              onChange={(e) => setProfHeadline(e.target.value)}
+                              placeholder="Ex: Cuidando do seu olhar com amor, visagismo & dedicação."
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                            Citação em Destaque (Pull-Quote com aspas)
+                          </label>
+                          <input
+                            type="text"
+                            value={profHeroQuote}
+                            onChange={(e) => setProfHeroQuote(e.target.value)}
+                            placeholder='Ex: "Hoje, meu trabalho vai muito além de um procedimento estético..."'
+                            className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                            Biografia Completa (Parágrafos separados por linha em branco)
+                          </label>
+                          <textarea
+                            rows={5}
+                            value={profBio}
+                            onChange={(e) => setProfBio(e.target.value)}
+                            placeholder="Conte sua história, sua paixão pelas sobrancelhas e visagismo..."
+                            className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none leading-relaxed"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Título da Seção "Nosso Espaço"
+                            </label>
+                            <input
+                              type="text"
+                              value={profAboutTitle}
+                              onChange={(e) => setProfAboutTitle(e.target.value)}
+                              placeholder="Um refúgio de acolhimento e cuidado desenhado para realçar você."
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-stone-600 uppercase mb-1">
+                              Descrição da Seção "Nosso Espaço"
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={profAboutDescription}
+                              onChange={(e) => setProfAboutDescription(e.target.value)}
+                              placeholder="Descrição sobre os pilares, biossegurança e conforto..."
+                              className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none leading-relaxed"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -2146,6 +3025,452 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
               )}
 
             </div>
+
+        {/* ========================================================= */}
+        {/* MODAL: GERENCIADOR DE BLOQUEIOS (MÊS, SEMANA, DIAS) */}
+        {/* ========================================================= */}
+        {showBlockModal && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                    <Ban className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                      Gerenciador de Bloqueios de Agenda
+                    </h5>
+                    <span className="text-[11px] text-stone-500">
+                      Feche ou libere meses inteiros, semanas ou dias no site
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowBlockModal(false)}
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Seletor do Tipo de Bloqueio */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-stone-700 uppercase">
+                  O que você deseja bloquear ou liberar?
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBlockType('MONTH');
+                      setBlockReason(`Mês de ${getMonthName(blockTargetMonth)} Lotado / Sem atendimento`);
+                    }}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      blockType === 'MONTH'
+                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    🚫 Mês Inteiro
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBlockType('RANGE');
+                      setBlockReason('Semana Bloqueada / Sem atendimento');
+                    }}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      blockType === 'RANGE' || blockType === 'WEEK'
+                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    📅 Semana / Período
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBlockType('DAYS');
+                      setBlockReason('Dias Bloqueados / Sem atendimento');
+                    }}
+                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      blockType === 'DAYS'
+                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                    }`}
+                  >
+                    ❌ Dias Livres ({selectedDates.size})
+                  </button>
+                </div>
+              </div>
+
+              {/* Configurações conforme o tipo selecionado */}
+              {blockType === 'MONTH' && (
+                <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
+                  <span className="text-[11px] font-bold text-stone-700 block">
+                    Escolha o Mês para Aplicar a Regra:
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Mês</label>
+                      <select
+                        value={blockTargetMonth}
+                        onChange={(e) => {
+                          const m = Number(e.target.value);
+                          setBlockTargetMonth(m);
+                          setBlockReason(`Mês de ${getMonthName(m)} Lotado / Sem atendimento`);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                          <option key={m} value={m}>
+                            {getMonthName(m)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Ano</label>
+                      <input
+                        type="number"
+                        value={blockTargetYear}
+                        onChange={(e) => setBlockTargetYear(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      >
+                      </input>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(blockType === 'RANGE' || blockType === 'WEEK') && (
+                <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
+                  <span className="text-[11px] font-bold text-stone-700 block">
+                    Defina o Intervalo de Datas da Semana / Período:
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">A partir de (Início):</label>
+                      <input
+                        type="date"
+                        value={blockStartDate}
+                        onChange={(e) => setBlockStartDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Até (Término):</label>
+                      <input
+                        type="date"
+                        value={blockEndDate}
+                        onChange={(e) => setBlockEndDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {blockType === 'DAYS' && (
+                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+                  {selectedDates.size === 0 ? (
+                    <span>⚠️ Ative o modo "Seleção Livre de Dias" no calendário para escolher os dias específicos antes de bloquear.</span>
+                  ) : (
+                    <span>Serão bloqueados <strong>{selectedDates.size} dia(s)</strong> selecionados no calendário.</span>
+                  )}
+                </div>
+              )}
+
+              {/* Motivo do Bloqueio */}
+              <div>
+                <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                  Motivo que será exibido (Ex: Mês Lotado, Férias, Sem atendimento):
+                </label>
+                <input
+                  type="text"
+                  value={blockReason}
+                  onChange={(e) => setBlockReason(e.target.value)}
+                  placeholder="Ex: Mês de Novembro Lotado"
+                  className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                />
+              </div>
+
+              {/* Ações */}
+              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  disabled={blockingPeriod}
+                  onClick={() => {
+                    setBlockIsOpen(false);
+                    handleApplyBlockPeriod();
+                  }}
+                  className="flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  <Ban className="w-4 h-4" />
+                  <span>{blockingPeriod ? 'Aplicando...' : 'Confirmar Bloqueio (Fechar Horários)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={blockingPeriod}
+                  onClick={() => {
+                    setBlockIsOpen(true);
+                    handleApplyBlockPeriod();
+                  }}
+                  className="py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <Unlock className="w-4 h-4" />
+                  <span>Liberar / Abrir</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* MODAL: CRIAR / EDITAR CAMPANHA DE BÔNUS */}
+        {/* ========================================================= */}
+        {showCampaignModal && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                    <Gift className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                      {editingCampaignId ? 'Editar Campanha de Bônus' : 'Criar Nova Campanha de Bônus'}
+                    </h5>
+                    <span className="text-[11px] text-stone-500">
+                      Configure benefícios dinâmicos para a página inicial
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCampaignModal(false)}
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveCampaign} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                      Título do Bônus *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={campTitle}
+                      onChange={(e) => setCampTitle(e.target.value)}
+                      placeholder="Ex: 20% OFF no Design com Henna"
+                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                      Badge / Selo
+                    </label>
+                    <input
+                      type="text"
+                      value={campBadgeText}
+                      onChange={(e) => setCampBadgeText(e.target.value)}
+                      placeholder="Tempo Limitado"
+                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Tipo de Benefício */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                      Tipo de Benefício
+                    </label>
+                    <select
+                      value={campDiscountType}
+                      onChange={(e) => setCampDiscountType(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                    >
+                      <option value="PERCENT">Desconto em Porcentagem (%)</option>
+                      <option value="FIXED">Desconto em Valor Fixo (R$)</option>
+                      <option value="GIFT">Brinde / Cortesia Especial</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                      {campDiscountType === 'GIFT' ? 'Nome do Brinde' : 'Valor do Desconto'}
+                    </label>
+                    {campDiscountType === 'GIFT' ? (
+                      <input
+                        type="text"
+                        value={campGiftName}
+                        onChange={(e) => setCampGiftName(e.target.value)}
+                        placeholder="Ex: Epilação de buço grátis"
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                      />
+                    ) : (
+                      <input
+                        type="number"
+                        min="1"
+                        value={campDiscountValue}
+                        onChange={(e) => setCampDiscountValue(e.target.value)}
+                        placeholder="Ex: 20"
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                    Descrição dos Benefícios & Detalhes
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={campDesc}
+                    onChange={(e) => setCampDesc(e.target.value)}
+                    placeholder="Descreva para quais clientes ou procedimentos este bônus é válido..."
+                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none leading-relaxed"
+                  />
+                </div>
+
+                {/* Validade: Dias, Semanas ou Meses */}
+                <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
+                  <span className="text-[11px] font-bold text-stone-700 block">
+                    Período de Validade (Dias, Semanas ou Meses):
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Data Início (Opcional):</label>
+                      <input
+                        type="date"
+                        value={campStartDate}
+                        onChange={(e) => setCampStartDate(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Data Fim (Opcional):</label>
+                      <input
+                        type="date"
+                        value={campEndDate}
+                        onChange={(e) => setCampEndDate(e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-stone-400 italic block">
+                    Deixe em branco se quiser manter o bônus ativo sem prazo de encerramento.
+                  </span>
+                </div>
+
+                {/* Uploader de Banner ou Foto da Campanha (Celular, Câmera ou Google Fotos) */}
+                <div className="bg-[#FAF6F4] p-3 rounded-2xl border border-[#EBDCD5]">
+                  <ImageUploader
+                    value={campImageUrl}
+                    onChange={setCampImageUrl}
+                    token={token}
+                    label="Foto ou Banner Promocional do Bônus (Opcional)"
+                    placeholder="Link da imagem ou selecione do celular"
+                    recommendedSize="Pode escolher foto do celular, câmera ou Google Fotos para ilustrar o bônus!"
+                  />
+                </div>
+
+                {/* Status Ativo / Oculto */}
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="checkbox"
+                    id="campActiveCheck"
+                    checked={campActive}
+                    onChange={(e) => setCampActive(e.target.checked)}
+                    className="w-4 h-4 accent-[#B87F6C] rounded cursor-pointer"
+                  />
+                  <label htmlFor="campActiveCheck" className="text-xs font-bold text-stone-800 cursor-pointer">
+                    Publicar imediatamente na página principal do site
+                  </label>
+                </div>
+
+                <div className="pt-2 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={savingCampaign}
+                    className="flex-1 py-3 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {savingCampaign ? 'Salvando...' : editingCampaignId ? 'Salvar Alterações' : 'Publicar Bônus no Site'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCampaignModal(false)}
+                    className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* MODAL: MOTIVO DA RECUSA DE BÔNUS */}
+        {/* ========================================================= */}
+        {noteModalApp && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
+              <div>
+                <h5 className="font-serif font-bold text-stone-900 text-base">
+                  Recusar Solicitação de Bônus
+                </h5>
+                <p className="text-xs text-stone-500 mt-1">
+                  Cliente: <strong>{noteModalApp.clientName}</strong> ({noteModalApp.clientPhone})
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                  Motivo da Recusa (Opcional - visível para a cliente):
+                </label>
+                <input
+                  type="text"
+                  value={adminNoteInput}
+                  onChange={(e) => setAdminNoteInput(e.target.value)}
+                  placeholder="Ex: Campanha válida apenas para novos agendamentos"
+                  className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateAppStatus(noteModalApp.id, 'RECUSADO', adminNoteInput);
+                    setNoteModalApp(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer shadow-xs"
+                >
+                  Confirmar Recusa
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNoteModalApp(null)}
+                  className="py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ========================================================= */}
         {/* MODAL: GERADOR DE ESCALA EM LOTE */}
@@ -2794,6 +4119,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
           >
             <Sparkles className="w-5 h-5 mb-0.5" />
             <span className="text-[10px]">Escala</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('bonus')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all cursor-pointer relative ${
+              activeTab === 'bonus' ? 'text-[#B87F6C] font-bold bg-[#F5ECE8]' : 'text-stone-500 font-medium'
+            }`}
+          >
+            <Gift className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px]">Bônus</span>
+            {bonusApplications.filter(a => a.status === 'PENDENTE').length > 0 && (
+              <span className="absolute top-1 right-2 w-3.5 h-3.5 rounded-full bg-rose-600 text-white text-[8px] flex items-center justify-center font-bold">
+                {bonusApplications.filter(a => a.status === 'PENDENTE').length}
+              </span>
+            )}
           </button>
 
           <button

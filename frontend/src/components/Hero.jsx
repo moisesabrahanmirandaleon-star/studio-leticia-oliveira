@@ -2,8 +2,24 @@ import React from 'react';
 import { Calendar, MessageCircle, Star, Sparkles, CheckCircle2, Heart, ShieldCheck } from 'lucide-react';
 import leticiaPerfilPhoto from '../assets/leticia-perfil.jpg';
 
-export function Hero({ onOpenBooking }) {
-  const whatsappUrl = "https://wa.me/5551995037223?text=Ol%C3%A1%2C%20Let%C3%ADcia!%20Li%20sua%20hist%C3%B3ria%20no%20site%20e%20gostaria%20de%20agendar%20um%20atendimento.";
+export function Hero({ onOpenBooking, stylist }) {
+  const currentStylist = stylist || {};
+  const phone = currentStylist.phone || '5551995037223';
+  const cleanPhone = phone.replace(/\D/g, '');
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Olá Letícia! Vi sua apresentação no site e gostaria de agendar um atendimento.")}`;
+
+  const greetingBadge = currentStylist.greetingBadge || "Prazer, sou a Letícia! ✨ • 25 Anos";
+  const headline = currentStylist.headline || "Cuidando do seu olhar com amor, visagismo & dedicação.";
+  const heroQuote = currentStylist.heroQuote || `"Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante."`;
+
+  const defaultBio = `Sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.\n\nFoi em 2023 que comecei a me enxergar nessa área e percebi que aquela paixão poderia se transformar em algo muito maior. Assim, dei início à minha caminhada no universo das sobrancelhas, descobrindo novas possibilidades de crescimento e realização.`;
+
+  const bioText = currentStylist.bio || defaultBio;
+  const bioParagraphs = bioText.split('\n\n').map(p => p.trim()).filter(Boolean);
+
+  const displayPhoto = (currentStylist.photoUrl && currentStylist.photoUrl !== '/leticia-perfil.jpg')
+    ? currentStylist.photoUrl
+    : leticiaPerfilPhoto;
 
   return (
     <section id="hero" className="relative overflow-hidden pt-8 pb-16 md:py-20 bg-gradient-to-b from-[#FAF6F4] via-[#F5ECE8] to-[#FAF6F4]">
@@ -18,27 +34,25 @@ export function Hero({ onOpenBooking }) {
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-xs sm:text-sm font-semibold tracking-wide border border-[#DDBFB2]/60 shadow-sm">
               <Sparkles className="w-4 h-4 text-[#B87F6C]" />
-              <span>Prazer, sou a Letícia! ✨ • 25 Anos</span>
+              <span>{greetingBadge}</span>
             </div>
 
             <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-stone-900 tracking-tight leading-[1.2]">
-              Cuidando do seu olhar com amor, <span className="italic font-normal text-[#B87F6C]">visagismo & dedicação</span>.
+              {headline}
             </h1>
 
-            {/* Texto Autêntico da Biografia */}
+            {/* Texto Autêntico da Biografia (Totalmente editável pelo Admin) */}
             <div className="space-y-3.5 text-stone-600 text-sm sm:text-base leading-relaxed text-left">
-              <p>
-                Sempre fui apaixonada por embelezar mulheres. Antes mesmo de imaginar que isso se tornaria minha profissão, eu já era aquela pessoa que fazia as sobrancelhas de todo mundo. As pessoas gostavam de como eu fazia as minhas e logo começaram a me pedir para fazer as delas também.
-              </p>
-              
-              <p>
-                Foi em 2023 que comecei a me enxergar nessa área e percebi que aquela paixão poderia se transformar em algo muito maior. Assim, dei início à minha caminhada no universo das sobrancelhas, descobrindo novas possibilidades de crescimento e realização.
-              </p>
+              {bioParagraphs.map((par, idx) => (
+                <p key={idx}>{par}</p>
+              ))}
 
-              {/* Citação em destaque (Pull-quote) */}
-              <div className="my-2 p-4 rounded-2xl bg-white/90 border-l-4 border-[#B87F6C] shadow-sm text-stone-800 font-serif italic text-sm sm:text-base leading-relaxed">
-                "Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante."
-              </div>
+              {/* Citação em destaque (Pull-quote editável) */}
+              {heroQuote && (
+                <div className="my-2 p-4 rounded-2xl bg-white/90 border-l-4 border-[#B87F6C] shadow-sm text-stone-800 font-serif italic text-sm sm:text-base leading-relaxed">
+                  {heroQuote.startsWith('"') ? heroQuote : `"${heroQuote}"`}
+                </div>
+              )}
 
               <p className="font-medium text-stone-800">
                 Sigo construindo minha história com amor pelo que faço. Seja bem-vinda ao meu espaço! Será um prazer cuidar de você. 💖
@@ -93,39 +107,34 @@ export function Hero({ onOpenBooking }) {
 
               <div className="rounded-3xl overflow-hidden bg-white p-2.5 shadow-2xl border border-[#EBDCD5]">
                 <img
-                  src={leticiaPerfilPhoto}
-                  alt="Letícia Oliveira Designer de Sobrancelhas"
+                  src={displayPhoto}
+                  alt={currentStylist.name || "Letícia Oliveira Designer de Sobrancelhas"}
                   loading="eager"
                   decoding="async"
                   className="w-full h-[400px] sm:h-[480px] object-cover rounded-2xl transform-gpu"
                 />
               </div>
 
-              {/* Floating Instagram Follow Card */}
-              <div className="absolute -bottom-5 -left-3 sm:-left-5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-[#DDBFB2] flex items-center gap-3">
-                <a
-                  href="https://instagram.com/leticia_r.oliveira"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
-                  title="Visitar Instagram da Letícia"
-                >
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-sm shrink-0">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
+              {/* Floating review card */}
+              <div className="absolute -bottom-6 -left-4 sm:-left-6 bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-[#EBDCD5] flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-[#FAF6F4] text-[#B87F6C] flex items-center justify-center font-serif text-lg font-bold border border-[#EBDCD5]">
+                  5.0
+                </div>
+                <div>
+                  <div className="flex text-amber-400 text-xs">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                    ))}
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-stone-900">@leticia_r.oliveira</p>
-                    <p className="text-[10px] text-stone-500">Siga no Instagram</p>
-                  </div>
-                </a>
+                  <p className="text-xs font-bold text-stone-900 mt-0.5">Visagismo de Excelência</p>
+                  <p className="text-[11px] text-stone-500">Procedimento exclusivo & natural</p>
+                </div>
               </div>
 
-              {/* Floating Top Tag */}
-              <div className="absolute top-5 -right-3 sm:-right-5 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5 border border-white">
+              {/* Experiência Badge */}
+              <div className="absolute top-4 right-4 bg-[#B87F6C] text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg border border-white/30 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-200" />
-                <span>Desde 2023 • Amor & Arte</span>
+                <span>{currentStylist.experienceYears || 'Desde 2023'}</span>
               </div>
 
             </div>

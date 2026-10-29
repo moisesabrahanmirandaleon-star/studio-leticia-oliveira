@@ -42,6 +42,9 @@ export function Navbar({ onOpenBooking, onOpenAdmin, onOpenInstall }) {
             <button onClick={() => scrollTo('servicos')} className="hover:text-[#B87F6C] transition-colors cursor-pointer">
               Serviços & Preços
             </button>
+            <button onClick={() => scrollTo('bonus')} className="hover:text-[#B87F6C] transition-colors cursor-pointer flex items-center gap-1 text-[#B87F6C] font-semibold">
+              <span>🎁 Bônus</span>
+            </button>
             <button onClick={() => scrollTo('sobre')} className="hover:text-[#B87F6C] transition-colors cursor-pointer">
               Atendimento & Espaço
             </button>
@@ -131,6 +134,12 @@ export function Navbar({ onOpenBooking, onOpenAdmin, onOpenInstall }) {
             className="block w-full text-left py-2 text-base font-medium text-stone-700 hover:text-[#B87F6C]"
           >
             Serviços & Preços
+          </button>
+          <button
+            onClick={() => scrollTo('bonus')}
+            className="block w-full text-left py-2 text-base font-bold text-[#B87F6C]"
+          >
+            🎁 Bônus & Promoções
           </button>
           <button
             onClick={() => scrollTo('sobre')}

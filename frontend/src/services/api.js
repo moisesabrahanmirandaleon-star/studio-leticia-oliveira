@@ -73,6 +73,14 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` }
     }),
 
+  // Upload de Fotos (Celular, Google Fotos, Arquivos)
+  uploadImage: (image, filename, token) =>
+    request('/upload', {
+      method: 'POST',
+      body: JSON.stringify({ image, filename }),
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
   // Disponibilidade e Escala Mensal
   checkAvailability: (stylistId, serviceId, date) =>
     request(`/schedules/availability?stylistId=${stylistId}&serviceId=${serviceId}&date=${date}`),
@@ -90,9 +98,58 @@ export const api = {
       body: JSON.stringify(data),
       headers: { Authorization: `Bearer ${token}` }
     }),
+  blockSchedulePeriod: (data, token) =>
+    request('/schedules/block', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` }
+    }),
   resetMonthSchedule: (stylistId, year, month, token) =>
     request(`/schedules/month?stylistId=${stylistId}&year=${year}&month=${month}`, {
       method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+
+  // Campanhas de Bônus e Benefícios (15 dias de regra por cliente)
+  getActiveBonusCampaigns: () => request('/bonus'),
+  applyForBonus: (data) =>
+    request('/bonus/apply', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    }),
+  checkBonusStatus: (phone) =>
+    request(`/bonus/status?phone=${encodeURIComponent(phone)}`),
+  getAdminBonusCampaigns: (token) =>
+    request('/bonus/admin/campaigns', {
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+  createBonusCampaign: (data, token) =>
+    request('/bonus/campaign', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+  updateBonusCampaign: (id, data, token) =>
+    request(`/bonus/campaign/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+  deleteBonusCampaign: (id, token) =>
+    request(`/bonus/campaign/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    }),
+  getBonusApplications: (filters = {}, token) => {
+    const params = new URLSearchParams(filters).toString();
+    return request(`/bonus/admin/applications${params ? `?${params}` : ''}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+  },
+  updateBonusApplicationStatus: (id, data, token) =>
+    request(`/bonus/admin/applications/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
       headers: { Authorization: `Bearer ${token}` }
     }),
 

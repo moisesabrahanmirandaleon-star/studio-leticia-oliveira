@@ -108,6 +108,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
   const [calendarMonth, setCalendarMonth] = useState(todayDate.getMonth() + 1);
   const [monthScheduleDays, setMonthScheduleDays] = useState([]);
   const [loadingMonthSchedule, setLoadingMonthSchedule] = useState(false);
+  const [monthBlockedInfo, setMonthBlockedInfo] = useState(null);
 
   // Carregar escala mensal do estilista selecionado
   useEffect(() => {
@@ -117,6 +118,11 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
       try {
         const res = await api.getMonthSchedule(selectedStylist.id, calendarYear, calendarMonth);
         setMonthScheduleDays(res.days || []);
+        if (res.isEntireMonthBlocked) {
+          setMonthBlockedInfo({ reason: res.monthBlockReason || 'Mês Lotado / Sem atendimento' });
+        } else {
+          setMonthBlockedInfo(null);
+        }
       } catch (err) {
         console.error('Erro ao carregar escala do mês para cliente:', err);
       } finally {
@@ -436,9 +442,22 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2.5 h-2.5 rounded-full bg-stone-300" />
-                  Folga / Indisponível
+                  Folga / Bloqueado
                 </span>
               </div>
+
+              {/* Alerta de Mês Bloqueado / Sem Atendimento */}
+              {monthBlockedInfo && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800 animate-fadeIn">
+                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block font-bold">Mês de {getMonthName(calendarMonth)} sem horários disponíveis</strong>
+                    <p className="text-[11px] text-rose-700 mt-0.5">
+                      {monthBlockedInfo.reason || 'Mês Lotado ou sem atendimento'}. Por favor, clique nas setas de navegação acima para escolher outro mês.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Grade do Calendário Mensal */}
               {loadingMonthSchedule ? (
@@ -500,7 +519,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                           <span className={`text-[9px] truncate max-w-full font-medium ${
                             isSelected ? 'text-white' : isAvailable ? 'text-emerald-700' : 'text-stone-400'
                           }`}>
-                            {isPast ? 'Passou' : d.isOpen ? 'Livre' : 'Folga'}
+                            {isPast ? 'Passou' : d.isOpen ? 'Livre' : (d.note ? d.note.slice(0, 10) : 'Fechado')}
                           </span>
                         </button>
                       );

@@ -5,9 +5,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -41,6 +40,16 @@ model Stylist {
   address                 String?  @default("Condomínio Altos da Theodomiro 2, 2435")
   addressDetails          String?  @default("2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar")
   instagram               String?  @default("@leticia_r.oliveira")
+  facebook                String?
+  twitter                 String?
+  tiktok                  String?
+  otherSocials            String?  // JSON string para outras redes adicionadas dinamicamente
+  headline                String?  @default("Cuidando do seu olhar com amor, visagismo & dedicação.")
+  greetingBadge           String?  @default("Prazer, sou a Letícia! ✨ • 25 Anos")
+  heroQuote               String?  @default("Hoje, meu trabalho vai muito além de um procedimento estético. É sobre valorizar a beleza individual, respeitar cada expressão e contribuir para que cada mulher se sinta ainda mais bonita e confiante.")
+  aboutTitle              String?  @default("Um refúgio de acolhimento e cuidado desenhado para realçar você.")
+  aboutDescription        String?  @default("O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada.")
+  experienceYears         String?  @default("Desde 2023 · Beleza & Visagismo")
   pixKey                  String?  @default("5551995037223")
   pixType                 String?  @default("Telefone") // "Telefone", "CPF", "Email", "Aleatória"
   cancellationNoticeHours Int?     @default(24)
@@ -135,4 +144,41 @@ model PortfolioItem {
   description String?
   createdAt   DateTime @default(now())
   stylist     Stylist? @relation(fields: [stylistId], references: [id], onDelete: SetNull)
+}
+
+// Campanhas de Bônus e Benefícios lançadas pela Administradora
+model BonusCampaign {
+  id            Int                @id @default(autoincrement())
+  title         String             // Ex: "Bônus Especial de Design com Henna"
+  description   String?            // Detalhes do bônus
+  serviceId     Int?               // Procedimento associado (opcional)
+  discountType  String             @default("PERCENT") // "PERCENT", "FIXED", "GIFT"
+  discountValue Float              @default(0) // Ex: 15 (% ou R$)
+  giftName      String?            // Ex: "Epilação do buço gratuita"
+  active        Boolean            @default(true) // Oculto ou Ativado
+  startDate     String?            // "YYYY-MM-DD"
+  endDate       String?            // "YYYY-MM-DD"
+  badgeText     String?            @default("Tempo Limitado") // "Exclusivo", "Mês de Aniversário"
+  imageUrl      String?            // Foto / banner do bônus
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  applications  BonusApplication[]
+}
+
+// Inscrições e Solicitações de Bônus feitas pelas clientes (sujeitas a aprovação da dona)
+model BonusApplication {
+  id          Int           @id @default(autoincrement())
+  campaignId  Int
+  clientName  String
+  clientPhone String        // Telefone para contato e trava de 15 dias
+  clientEmail String?
+  serviceName String?       // Procedimento desejado
+  status      String        @default("PENDENTE") // "PENDENTE", "APROVADO", "RECUSADO", "UTILIZADO"
+  adminNote   String?       // Observação da administradora
+  code        String        @unique // Código único: BONUS-1234
+  approvedAt  DateTime?
+  appliedAt   DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  campaign    BonusCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 }

@@ -10,12 +10,20 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import stylistRoutes from './routes/stylistRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import bonusRoutes from './routes/bonusRoutes.js';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distPath = path.resolve(__dirname, '../../frontend/dist');
+const uploadsPath = path.resolve(__dirname, '../uploads');
+
+// Garantir que a pasta de uploads exista
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
 
 const app = express();
 
@@ -25,7 +33,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Servir arquivos de upload estáticos (fotos de clientes, procedimentos, banners)
+app.use('/uploads', express.static(uploadsPath));
 
 // Rota de Health Check
 app.get('/api/health', (req, res) => {
@@ -42,6 +54,8 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/stylists', stylistRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/bonus', bonusRoutes);
 
 // Servir frontend compilado em produção caso a pasta dist exista
 if (fs.existsSync(distPath)) {

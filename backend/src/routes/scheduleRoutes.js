@@ -6,7 +6,8 @@ import {
   getMonthSchedule,
   updateDateSchedule,
   batchUpdateSchedule,
-  resetMonthSchedule
+  resetMonthSchedule,
+  blockSchedulePeriod
 } from '../controllers/scheduleController.js';
 import { authenticateToken, requireAdmin } from '../middleware/auth.js';
 
@@ -25,6 +26,7 @@ router.put('/stylist/:stylistId', authenticateToken, requireAdmin, updateStylist
 // Rotas de escala por data e em lote (Autonomia para Letícia)
 router.put('/date', authenticateToken, requireAdmin, updateDateSchedule);
 router.post('/batch', authenticateToken, requireAdmin, batchUpdateSchedule);
+router.post('/block', authenticateToken, requireAdmin, blockSchedulePeriod);
 router.delete('/month', authenticateToken, requireAdmin, resetMonthSchedule);
 
 export default router;

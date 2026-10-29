@@ -98,7 +98,19 @@ export async function getMonthSchedule(req, res) {
       month: Number(month)
     });
 
-    return res.json({ year: Number(year), month: Number(month), days });
+    const totalDays = days.length;
+    const closedDays = days.filter((d) => !d.isOpen);
+    const isEntireMonthBlocked = totalDays > 0 && closedDays.length === totalDays;
+    const monthBlockReason = isEntireMonthBlocked ? (closedDays[0]?.note || 'Mês Bloqueado / Sem Atendimento') : null;
+
+    return res.json({
+      year: Number(year),
+      month: Number(month),
+      days,
+      isEntireMonthBlocked,
+      blockedDaysCount: closedDays.length,
+      monthBlockReason
+    });
   } catch (error) {
     console.error('Erro ao buscar escala do mês:', error);
     return res.status(500).json({ error: 'Erro ao buscar escala do mês.' });
@@ -328,5 +340,112 @@ export async function resetMonthSchedule(req, res) {
   } catch (error) {
     console.error('Erro ao redefinir escala do mês:', error);
     return res.status(500).json({ error: 'Erro ao redefinir escala do mês.' });
+  }
+}
+
+/**
+ * Bloquear ou Desbloquear Meses, Semanas, Intervalos ou Dias específicos
+ */
+export async function blockSchedulePeriod(req, res) {
+  try {
+    const {
+      stylistId,
+      type, // 'MONTH' | 'WEEK' | 'RANGE' | 'DAYS'
+      year,
+      month,
+      weekNumber, // 1 a 5
+      startDate,
+      endDate,
+      dates, // array de 'YYYY-MM-DD'
+      isOpen = false, // false = bloquear, true = liberar
+      reason = 'Bloqueado pela Administradora'
+    } = req.body;
+
+    if (!stylistId || !type) {
+      return res.status(400).json({ error: 'stylistId e type são obrigatórios.' });
+    }
+
+    const targetDates = [];
+
+    if (type === 'MONTH') {
+      if (!year || !month) return res.status(400).json({ error: 'year e month são obrigatórios para bloquear o mês.' });
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const monthStr = String(month).padStart(2, '0');
+      for (let day = 1; day <= daysInMonth; day++) {
+        targetDates.push(`${year}-${monthStr}-${String(day).padStart(2, '0')}`);
+      }
+    } else if (type === 'WEEK') {
+      if (startDate && endDate) {
+        let current = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T00:00:00');
+        while (current <= end) {
+          targetDates.push(current.toISOString().split('T')[0]);
+          current.setDate(current.getDate() + 1);
+        }
+      } else if (year && month && weekNumber) {
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const monthStr = String(month).padStart(2, '0');
+        const startDay = (Number(weekNumber) - 1) * 7 + 1;
+        const endDay = Math.min(startDay + 6, daysInMonth);
+        for (let d = startDay; d <= endDay; d++) {
+          targetDates.push(`${year}-${monthStr}-${String(d).padStart(2, '0')}`);
+        }
+      } else {
+        return res.status(400).json({ error: 'Informe startDate e endDate ou year, month e weekNumber.' });
+      }
+    } else if (type === 'RANGE') {
+      if (!startDate || !endDate) return res.status(400).json({ error: 'startDate e endDate são obrigatórios.' });
+      let current = new Date(startDate + 'T00:00:00');
+      const end = new Date(endDate + 'T00:00:00');
+      while (current <= end) {
+        targetDates.push(current.toISOString().split('T')[0]);
+        current.setDate(current.getDate() + 1);
+      }
+    } else if (type === 'DAYS') {
+      if (!Array.isArray(dates) || dates.length === 0) {
+        return res.status(400).json({ error: 'Informe uma lista de datas para bloquear.' });
+      }
+      targetDates.push(...dates);
+    }
+
+    if (targetDates.length === 0) {
+      return res.status(400).json({ error: 'Nenhuma data encontrada para aplicar a regra.' });
+    }
+
+    const defaultReason = Boolean(isOpen) ? 'Atendimento confirmado' : 'Sem atendimento / Bloqueado';
+    const finalReason = reason && reason.trim() ? reason.trim() : defaultReason;
+
+    const operations = targetDates.map((dateStr) => {
+      return prisma.dateSchedule.upsert({
+        where: {
+          stylistId_date: {
+            stylistId: Number(stylistId),
+            date: dateStr
+          }
+        },
+        update: {
+          isOpen: Boolean(isOpen),
+          note: finalReason
+        },
+        create: {
+          stylistId: Number(stylistId),
+          date: dateStr,
+          isOpen: Boolean(isOpen),
+          note: finalReason
+        }
+      });
+    });
+
+    await prisma.$transaction(operations);
+
+    const actionText = Boolean(isOpen) ? 'liberados' : 'bloqueados';
+    return res.json({
+      message: `${targetDates.length} dia(s) foram ${actionText} com sucesso.`,
+      appliedDaysCount: targetDates.length,
+      targetDates
+    });
+  } catch (error) {
+    console.error('Erro ao bloquear período na agenda:', error);
+    return res.status(500).json({ error: 'Erro ao bloquear período na agenda.' });
   }
 }

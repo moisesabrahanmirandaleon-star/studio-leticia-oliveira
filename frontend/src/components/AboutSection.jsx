@@ -1,7 +1,14 @@
 import React from 'react';
 import { MapPin, Clock, ShieldCheck, Heart, Sparkles, Award, Coffee, CalendarCheck } from 'lucide-react';
 
-export function AboutSection({ onOpenBooking }) {
+export function AboutSection({ onOpenBooking, stylist }) {
+  const currentStylist = stylist || {};
+  const aboutTitle = currentStylist.aboutTitle || "Um refúgio de acolhimento e cuidado desenhado para realçar você.";
+  const aboutDescription = currentStylist.aboutDescription || "O Studio Letícia Oliveira nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada. Com técnicas precisas de design, micropigmentação, brow lamination e despigmentação química, cada procedimento é personalizado para valorizar sua beleza com naturalidade e elegância.";
+  const address = currentStylist.address || "Condomínio Altos da Theodomiro 2, 2435";
+  const addressDetails = currentStylist.addressDetails || "2ª portaria (último prédio da rua), Bloco 6, Apê 652 – 5º andar";
+  const experienceYears = currentStylist.experienceYears || "Desde 2023 · Beleza & Visagismo";
+
   return (
     <section id="sobre" className="py-20 bg-[#FAF6F4] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -16,11 +23,11 @@ export function AboutSection({ onOpenBooking }) {
             </div>
 
             <h2 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight">
-              Um refúgio de acolhimento e cuidado desenhado para realçar você.
+              {aboutTitle}
             </h2>
 
             <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
-              O <strong>Studio Letícia Oliveira</strong> nasceu da paixão pelo visagismo facial e pela crença de que cada rosto possui uma harmonia única que merece ser respeitada. Com técnicas precisas de design, micropigmentação, brow lamination e despigmentação química, cada procedimento é personalizado para valorizar sua beleza com naturalidade e elegância.
+              {aboutDescription}
             </p>
 
             {/* Quality Pillars */}
@@ -87,8 +94,8 @@ export function AboutSection({ onOpenBooking }) {
                     <Sparkles className="w-5 h-5 text-amber-200" />
                   </div>
                   <div>
-                    <span className="font-serif font-bold text-stone-900 text-lg block leading-none">Studio Letícia Oliveira</span>
-                    <span className="text-[11px] text-[#A06654] font-medium tracking-wider uppercase mt-1 block">Desde 2023 · Beleza & Visagismo</span>
+                    <span className="font-serif font-bold text-stone-900 text-lg block leading-none">Studio {currentStylist.name || 'Letícia Oliveira'}</span>
+                    <span className="text-[11px] text-[#A06654] font-medium tracking-wider uppercase mt-1 block">{experienceYears}</span>
                   </div>
                 </div>
               </div>
@@ -101,11 +108,10 @@ export function AboutSection({ onOpenBooking }) {
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block">Endereço do Studio</span>
                   <p className="text-sm font-bold text-stone-900 mt-0.5">
-                    Condomínio Altos da Theodomiro 2, 2435
+                    {address}
                   </p>
                   <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
-                    2ª portaria (último prédio da rua)<br />
-                    Bloco 6, Apê 652 – 5º andar
+                    {addressDetails}
                   </p>
                   <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-[10px] font-bold">
                     ✓ Ambiente privativo e acolhedor

@@ -12,6 +12,10 @@ backend/.env
 dist/
 */dist/
 
+# Uploads
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # SQLite databases
 *.db
 *.db-journal

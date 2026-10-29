@@ -5,6 +5,7 @@ import { Hero } from './components/Hero';
 import { ServicesSection } from './components/ServicesSection';
 import { AboutSection } from './components/AboutSection';
 import { PortfolioSection } from './components/PortfolioSection';
+import { BonusSection } from './components/BonusSection';
 import { Footer } from './components/Footer';
 import { BookingModal } from './components/BookingModal';
 import { AdminPanel } from './components/Admin/AdminPanel';
@@ -157,14 +158,17 @@ export default function App() {
 
           {/* Conteúdo Principal */}
           <main className="flex-1">
-            <Hero onOpenBooking={() => handleOpenBooking(null)} />
+            <Hero onOpenBooking={() => handleOpenBooking(null)} stylist={stylists[0]} />
+
+            {/* Seção Dinâmica de Bônus & Promoções */}
+            <BonusSection onOpenBooking={() => handleOpenBooking(null)} />
 
             <ServicesSection
               services={services}
               onSelectService={(service) => handleOpenBooking(service)}
             />
 
-            <AboutSection onOpenBooking={() => handleOpenBooking(null)} />
+            <AboutSection onOpenBooking={() => handleOpenBooking(null)} stylist={stylists[0]} />
 
             <PortfolioSection
               portfolioItems={portfolioItems}
@@ -174,7 +178,7 @@ export default function App() {
           </main>
 
           {/* Rodapé com link discreto para a Área da Dona */}
-          <Footer onOpenAdmin={() => navigateTo('admin')} />
+          <Footer onOpenAdmin={() => navigateTo('admin')} stylist={stylists[0]} />
 
           {/* Modal de Agendamento Passo a Passo */}
           <BookingModal
@@ -198,7 +202,7 @@ export default function App() {
 
           {/* Botão Flutuante de WhatsApp (Mobile & Desktop) */}
           <a
-            href="https://wa.me/5551995037223?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20hor%C3%A1rio%20no%20Studio%20Let%C3%ADcia%20Oliveira."
+            href={`https://wa.me/${(stylists[0]?.phone || '5551995037223').replace(/\D/g, '')}?text=${encodeURIComponent("Olá! Gostaria de agendar um horário no Studio Letícia Oliveira.")}`}
             target="_blank"
             rel="noopener noreferrer"
             className="fixed bottom-5 right-5 z-30 w-13 h-13 sm:w-14 sm:h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full flex items-center justify-center shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 active:scale-95 group"

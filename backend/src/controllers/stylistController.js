@@ -60,6 +60,16 @@ export async function updateStylist(req, res) {
       address,
       addressDetails,
       instagram,
+      facebook,
+      twitter,
+      tiktok,
+      otherSocials,
+      headline,
+      greetingBadge,
+      heroQuote,
+      aboutTitle,
+      aboutDescription,
+      experienceYears,
       pixKey,
       pixType,
       cancellationNoticeHours,
@@ -78,6 +88,20 @@ export async function updateStylist(req, res) {
     if (address !== undefined) dataToUpdate.address = address?.trim();
     if (addressDetails !== undefined) dataToUpdate.addressDetails = addressDetails?.trim();
     if (instagram !== undefined) dataToUpdate.instagram = instagram?.trim();
+    if (facebook !== undefined) dataToUpdate.facebook = facebook?.trim() || null;
+    if (twitter !== undefined) dataToUpdate.twitter = twitter?.trim() || null;
+    if (tiktok !== undefined) dataToUpdate.tiktok = tiktok?.trim() || null;
+    if (otherSocials !== undefined) {
+      dataToUpdate.otherSocials = typeof otherSocials === 'string' ? otherSocials : JSON.stringify(otherSocials);
+    }
+
+    if (headline !== undefined) dataToUpdate.headline = headline?.trim() || null;
+    if (greetingBadge !== undefined) dataToUpdate.greetingBadge = greetingBadge?.trim() || null;
+    if (heroQuote !== undefined) dataToUpdate.heroQuote = heroQuote?.trim() || null;
+    if (aboutTitle !== undefined) dataToUpdate.aboutTitle = aboutTitle?.trim() || null;
+    if (aboutDescription !== undefined) dataToUpdate.aboutDescription = aboutDescription?.trim() || null;
+    if (experienceYears !== undefined) dataToUpdate.experienceYears = experienceYears?.trim() || null;
+
     if (pixKey !== undefined) dataToUpdate.pixKey = pixKey?.trim();
     if (pixType !== undefined) dataToUpdate.pixType = pixType?.trim();
     if (cancellationNoticeHours !== undefined) dataToUpdate.cancellationNoticeHours = Number(cancellationNoticeHours);
