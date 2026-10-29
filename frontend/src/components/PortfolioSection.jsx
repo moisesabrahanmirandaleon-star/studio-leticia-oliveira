@@ -12,6 +12,7 @@ import {
   Clock,
   Heart
 } from 'lucide-react';
+import { resolveImageUrl } from '../services/imageUtils';
 
 export function PortfolioSection({ portfolioItems = [], services = [], onSelectService }) {
   const [activeCategory, setActiveCategory] = useState('Todos');
@@ -136,7 +137,7 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
             >
               <div className="aspect-square overflow-hidden bg-stone-100 relative">
                 <img
-                  src={item.imageUrl}
+                  src={resolveImageUrl(item.imageUrl)}
                   alt={item.title}
                   loading="lazy"
                   decoding="async"
@@ -239,7 +240,7 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
             {/* Imagem Ampliada com Controles de Navegação */}
             <div className="md:w-1/2 bg-stone-900 relative flex items-center justify-center overflow-hidden min-h-[260px] md:min-h-[420px]">
               <img
-                src={selectedItem.imageUrl}
+                src={resolveImageUrl(selectedItem.imageUrl)}
                 alt={selectedItem.title}
                 className="w-full h-full object-cover max-h-[60vh] md:max-h-full"
               />

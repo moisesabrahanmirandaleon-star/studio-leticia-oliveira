@@ -51,6 +51,7 @@ import { AdminLoginView } from './AdminLoginView';
 import { ImageUploader } from '../ImageUploader';
 import { formatBrazilianPhoneInput, formatPhoneDisplay, buildWhatsAppUrl } from '../../utils/phoneUtils';
 import { urlBase64ToUint8Array } from '../../utils/pushUtils';
+import { resolveImageUrl, BONUS_PRESETS } from '../../services/imageUtils';
 
 export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const { user, token, isAuthenticated, login, logout } = useAuth();
@@ -2586,18 +2587,30 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 >
                                   {/* Top header do card */}
                                   <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                      <span className="text-[10px] font-bold uppercase text-stone-500 block">
-                                        Campanha Solicitada:
-                                      </span>
-                                      <strong className="text-stone-900 text-sm font-serif font-bold block">
-                                        {app.campaign?.title || 'Bônus Especial'}
-                                      </strong>
-                                      {app.serviceName && (
-                                        <span className="text-[11px] text-[#A06654] font-medium">
-                                          Procedimento: {app.serviceName}
-                                        </span>
+                                    <div className="flex items-start gap-2.5 min-w-0">
+                                      {app.campaign?.imageUrl && (
+                                        <div className="w-12 h-12 rounded-xl overflow-hidden border border-stone-200 shrink-0 bg-stone-100">
+                                          <img
+                                            src={resolveImageUrl(app.campaign.imageUrl)}
+                                            alt={app.campaign?.title || 'Bônus'}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                          />
+                                        </div>
                                       )}
+                                      <div className="min-w-0">
+                                        <span className="text-[10px] font-bold uppercase text-stone-500 block">
+                                          Campanha Solicitada:
+                                        </span>
+                                        <strong className="text-stone-900 text-sm font-serif font-bold block truncate">
+                                          {app.campaign?.title || 'Bônus Especial'}
+                                        </strong>
+                                        {app.serviceName && (
+                                          <span className="text-[11px] text-[#A06654] font-medium block truncate">
+                                            Procedimento: {app.serviceName}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
                                     {/* Badge de status */}
@@ -2753,8 +2766,13 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               </div>
 
                               {camp.imageUrl && (
-                                <div className="w-full h-28 rounded-xl overflow-hidden border border-stone-200">
-                                  <img src={camp.imageUrl} alt={camp.title} className="w-full h-full object-cover" />
+                                <div className="w-full h-28 rounded-xl overflow-hidden border border-stone-200 bg-stone-100">
+                                  <img
+                                    src={resolveImageUrl(camp.imageUrl)}
+                                    alt={camp.title}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  />
                                 </div>
                               )}
 
@@ -4089,16 +4107,78 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   </span>
                 </div>
 
-                {/* Uploader de Banner ou Foto da Campanha (Celular, Câmera ou Google Fotos) */}
-                <div className="bg-[#FAF6F4] p-3 rounded-2xl border border-[#EBDCD5]">
+                {/* Uploader de Banner ou Foto da Campanha (Celular, Câmera ou Modelos Prontos) */}
+                <div className="bg-[#FAF6F4] p-3.5 rounded-2xl border border-[#EBDCD5] space-y-3">
                   <ImageUploader
                     value={campImageUrl}
                     onChange={setCampImageUrl}
                     token={token}
-                    label="Foto ou Banner Promocional do Bônus (Opcional)"
-                    placeholder="Link da imagem ou selecione do celular"
-                    recommendedSize="Pode escolher foto do celular, câmera ou Google Fotos para ilustrar o bônus!"
+                    presets={BONUS_PRESETS}
+                    label="Foto ou Imagem Promocional do Bônus (Anexar Imagem)"
+                    placeholder="Cole um link ou escolha do celular / modelos prontos"
+                    recommendedSize="Pode escolher foto do celular, câmera, galeria ou modelos prontos do studio!"
                   />
+
+                  {/* PRÉVIA AO VIVO DO CARD NA PÁGINA INICIAL */}
+                  <div className="mt-3 pt-3 border-t border-[#EBDCD5]">
+                    <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider flex items-center gap-1 mb-2">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      Visualização em Tempo Real (Como o cliente verá no site):
+                    </span>
+
+                    <div className="bg-white rounded-2xl p-4 border border-[#EBDCD5] shadow-xs space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#FAF6F4] text-[#B87F6C] border border-[#EBDCD5] text-[10px] font-bold">
+                          <Sparkles className="w-2.5 h-2.5 text-amber-500" />
+                          {campBadgeText || 'Tempo Limitado'}
+                        </span>
+                        {campEndDate && (
+                          <span className="text-[10px] font-medium text-stone-500 flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5 text-stone-400" />
+                            Até {campEndDate.split('-').reverse().join('/')}
+                          </span>
+                        )}
+                      </div>
+
+                      {campImageUrl ? (
+                        <div className="w-full h-32 rounded-xl overflow-hidden border border-[#EBDCD5] bg-stone-100">
+                          <img
+                            src={resolveImageUrl(campImageUrl)}
+                            alt="Prévia"
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-20 rounded-xl bg-stone-50 border border-dashed border-stone-200 flex items-center justify-center text-stone-400 text-xs gap-1">
+                          <Gift className="w-4 h-4 text-stone-300" />
+                          <span>Sem imagem anexada (ficará em formato compacto)</span>
+                        </div>
+                      )}
+
+                      <h6 className="font-serif font-bold text-stone-900 text-sm">
+                        {campTitle || 'Título do Bônus'}
+                      </h6>
+
+                      {campDesc && (
+                        <p className="text-[11px] text-stone-500 line-clamp-2 leading-relaxed">
+                          {campDesc}
+                        </p>
+                      )}
+
+                      <div className="p-2.5 rounded-xl bg-[#FAF6F4] border border-[#EBDCD5] flex items-center justify-between text-xs">
+                        <div>
+                          <span className="text-[9px] uppercase font-bold text-stone-500 block">Benefício:</span>
+                          <strong className="text-xs font-bold text-[#7E4E40]">
+                            {campDiscountType === 'PERCENT' && `${campDiscountValue || 0}% de Desconto`}
+                            {campDiscountType === 'FIXED' && `R$ ${campDiscountValue || 0} OFF`}
+                            {campDiscountType === 'GIFT' && (campGiftName || 'Brinde Especial')}
+                          </strong>
+                        </div>
+                        <Tag className="w-3.5 h-3.5 text-[#B87F6C]" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Status Ativo / Oculto */}

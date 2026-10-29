@@ -2,7 +2,7 @@
  * Utilitário para compactar e converter fotos do celular, câmera ou Google Fotos
  * antes de enviar para o servidor, garantindo velocidade máxima e economia de espaço.
  */
-export async function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.82) {
+export async function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.80) {
   return new Promise((resolve, reject) => {
     if (!file) {
       return reject(new Error('Nenhum arquivo de imagem foi selecionado.'));
@@ -67,3 +67,62 @@ export async function compressImageFile(file, maxWidth = 1200, maxHeight = 1200,
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Resolve qualquer URL de imagem, seja ela Base64 (data:), externa (https://)
+ * ou caminho relativo do backend (/uploads/...), prevenindo erros 404 entre Vercel e Render.
+ */
+export function resolveImageUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://')
+  ) {
+    return trimmed;
+  }
+
+  // Se for caminho relativo (ex: /uploads/...)
+  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+  const backendOrigin = apiBase.replace(/\/api\/?$/, '');
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${backendOrigin}${cleanPath}`;
+}
+
+/**
+ * Presets de imagens temáticas para campanhas de bônus do Studio
+ */
+export const BONUS_PRESETS = [
+  {
+    id: 'indicacao',
+    title: 'Indicação de Amiga',
+    url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80',
+    description: 'Ideal para bônus de indicação e parcerias'
+  },
+  {
+    id: 'sobrancelhas',
+    title: 'Design & Sobrancelhas',
+    url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&auto=format&fit=crop&q=80',
+    description: 'Foco no olhar, visagismo e sobrancelhas perfeitas'
+  },
+  {
+    id: 'henna',
+    title: 'Henna & Definição',
+    url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&auto=format&fit=crop&q=80',
+    description: 'Preenchimento e realce marcante com henna'
+  },
+  {
+    id: 'lamination',
+    title: 'Brow Lamination & Lash',
+    url: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&auto=format&fit=crop&q=80',
+    description: 'Fios alinhados, laminados e efeito de salão'
+  },
+  {
+    id: 'brinde',
+    title: 'Brinde & Cortesia VIP',
+    url: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=800&auto=format&fit=crop&q=80',
+    description: 'Presentes exclusivos (ex: buço grátis, hidratação)'
+  }
+];

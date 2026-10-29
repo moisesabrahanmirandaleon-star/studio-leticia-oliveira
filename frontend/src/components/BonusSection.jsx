@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Gift, Sparkles, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle } from 'lucide-react';
 import { api } from '../services/api';
 import { formatBrazilianPhoneInput, formatPhoneDisplay } from '../utils/phoneUtils';
+import { resolveImageUrl } from '../services/imageUtils';
 
 export function BonusSection({ onOpenBooking }) {
   const [campaigns, setCampaigns] = useState([]);
@@ -182,16 +183,28 @@ export function BonusSection({ onOpenBooking }) {
                     )}
                   </div>
 
-                  {/* Foto da Campanha se houver */}
-                  {camp.imageUrl && (
-                    <div className="w-full h-36 rounded-2xl overflow-hidden border border-[#EBDCD5]">
+                  {/* Foto da Campanha com Fallback Gracioso */}
+                  {camp.imageUrl ? (
+                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-stone-100">
                       <img
-                        src={camp.imageUrl}
+                        src={resolveImageUrl(camp.imageUrl)}
                         alt={camp.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fb = e.currentTarget.parentElement?.querySelector('.card-fallback-banner');
+                          if (fb) fb.style.display = 'flex';
+                        }}
                       />
+                      <div className="card-fallback-banner hidden w-full h-full bg-gradient-to-br from-[#FAF6F4] via-[#F5ECE8] to-[#EBDCD5] items-center justify-center p-4 text-center">
+                        <div className="flex flex-col items-center gap-1.5 text-[#B87F6C]">
+                          <Gift className="w-8 h-8 text-[#B87F6C]" />
+                          <span className="font-serif text-sm font-bold text-stone-800">{camp.title}</span>
+                          <span className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Studio Letícia Oliveira</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Título & Descrição */}
                   <div>
@@ -308,6 +321,46 @@ export function BonusSection({ onOpenBooking }) {
               </div>
             ) : (
               <form onSubmit={handleSubmitApplication} className="space-y-5">
+                {/* Banner Visual Ilustrativo do Bônus ao Aplicar */}
+                {selectedCampaign.imageUrl ? (
+                  <div className="w-full h-44 rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-stone-100 shadow-inner">
+                    <img
+                      src={resolveImageUrl(selectedCampaign.imageUrl)}
+                      alt={selectedCampaign.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fb = e.currentTarget.parentElement?.querySelector('.modal-fallback-banner');
+                        if (fb) fb.style.display = 'flex';
+                      }}
+                    />
+                    <div className="modal-fallback-banner hidden w-full h-full bg-gradient-to-br from-[#FAF6F4] via-[#F5ECE8] to-[#EBDCD5] items-center justify-center p-4 text-center">
+                      <div className="flex flex-col items-center gap-1 text-[#B87F6C]">
+                        <Gift className="w-8 h-8" />
+                        <span className="font-serif text-sm font-bold text-stone-800">{selectedCampaign.title}</span>
+                        <span className="text-[10px] text-stone-500">Studio Letícia Oliveira</span>
+                      </div>
+                    </div>
+                    {/* Badge flutuante sobre a foto */}
+                    <div className="absolute top-3 left-3">
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[#B87F6C] text-[11px] font-bold shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        {selectedCampaign.badgeText || 'Tempo Limitado'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full py-4 px-5 rounded-2xl bg-gradient-to-r from-[#FAF6F4] via-[#F5ECE8] to-[#FAF6F4] border border-[#EBDCD5] flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] uppercase font-bold text-stone-500 block">Benefício Selecionado</span>
+                      <strong className="text-sm font-bold text-[#7E4E40] block">{selectedCampaign.title}</strong>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-[#EBDCD5] text-[#7E4E40] flex items-center justify-center shrink-0">
+                      <Gift className="w-5 h-5 text-[#B87F6C]" />
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBDCD5] text-[#7E4E40] text-[11px] font-bold uppercase">
                     <Gift className="w-3.5 h-3.5 text-[#B87F6C]" />
@@ -498,9 +551,21 @@ export function BonusSection({ onOpenBooking }) {
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
-                          <strong className="text-stone-900 text-xs sm:text-sm font-bold">
-                            {item.campaign?.title || 'Campanha de Bônus'}
-                          </strong>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {item.campaign?.imageUrl && (
+                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-200 shrink-0 bg-stone-100">
+                                <img
+                                  src={resolveImageUrl(item.campaign.imageUrl)}
+                                  alt={item.campaign?.title || 'Bônus'}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
+                              </div>
+                            )}
+                            <strong className="text-stone-900 text-xs sm:text-sm font-bold truncate">
+                              {item.campaign?.title || 'Campanha de Bônus'}
+                            </strong>
+                          </div>
 
                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${

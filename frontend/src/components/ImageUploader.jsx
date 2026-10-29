@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Link as LinkIcon, Check, Loader2, X, Sparkles, Smartphone } from 'lucide-react';
-import { compressImageFile } from '../services/imageUtils';
+import { compressImageFile, resolveImageUrl } from '../services/imageUtils';
 import { api } from '../services/api';
 
 export function ImageUploader({
@@ -9,9 +9,10 @@ export function ImageUploader({
   token,
   label = 'Foto ou Imagem',
   placeholder = 'https://images.unsplash.com/... ou escolha do celular',
-  recommendedSize = 'Recomendado: Formato quadrado ou retrato (até 1200px)'
+  recommendedSize = 'Recomendado: Formato quadrado ou retrato (até 1200px)',
+  presets = []
 }) {
-  const [mode, setMode] = useState('device'); // 'device' | 'url'
+  const [mode, setMode] = useState('device'); // 'device' | 'url' | 'presets'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,25 +27,12 @@ export function ImageUploader({
     setSuccess(false);
 
     try {
-      // 1. Comprimir imagem no navegador para ultra velocidade
-      const compressed = await compressImageFile(file, 1200, 1200, 0.85);
+      // 1. Comprimir imagem no navegador para ultra velocidade e qualidade impecável
+      const compressed = await compressImageFile(file, 1000, 1000, 0.80);
 
-      // 2. Fazer upload para o servidor
-      if (token) {
-        try {
-          const res = await api.uploadImage(compressed.dataUrl, file.name, token);
-          if (res.url) {
-            onChange(res.url);
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-            return;
-          }
-        } catch (uploadErr) {
-          console.warn('Upload via backend falhou, usando dataUrl local otimizado:', uploadErr);
-        }
-      }
-
-      // Fallback: usar o dataUrl comprimido diretamente
+      // 2. Salvar como dataUrl base64 ultra leve diretamente no banco:
+      // Isso garante permanência definitiva (não se perde se o servidor reiniciar ou dormir)
+      // e resolve na hora no Vercel sem o erro 404 de pastas relativas (/uploads/...)
       onChange(compressed.dataUrl);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
@@ -61,7 +49,7 @@ export function ImageUploader({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-1">
         <label className="block text-[11px] font-bold text-stone-700 uppercase tracking-wider">
           {label}
         </label>
@@ -78,8 +66,24 @@ export function ImageUploader({
             }`}
           >
             <Smartphone className="w-3 h-3" />
-            <span>Celular / Google Fotos</span>
+            <span>Celular / Fotos</span>
           </button>
+
+          {presets.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMode('presets')}
+              className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                mode === 'presets'
+                  ? 'bg-white text-[#B87F6C] shadow-2xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-amber-500" />
+              <span>Modelos Prontos</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setMode('url')}
@@ -95,7 +99,7 @@ export function ImageUploader({
         </div>
       </div>
 
-      {mode === 'device' ? (
+      {mode === 'device' && (
         <div className="space-y-2">
           <input
             ref={fileInputRef}
@@ -114,7 +118,7 @@ export function ImageUploader({
             {loading ? (
               <div className="flex flex-col items-center gap-2 py-2 text-[#B87F6C]">
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <span className="text-xs font-bold">Otimizando e enviando foto...</span>
+                <span className="text-xs font-bold">Otimizando e anexando imagem...</span>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1.5 py-1">
@@ -122,16 +126,51 @@ export function ImageUploader({
                   <Upload className="w-5 h-5" />
                 </div>
                 <div className="text-xs font-bold text-stone-800">
-                  Toque para escolher do celular ou Google Fotos
+                  Toque para anexar foto do celular ou computador
                 </div>
                 <div className="text-[11px] text-stone-500">
-                  Galeria do aparelho • Câmera • Google Fotos
+                  Galeria • Câmera • Google Fotos • PNG ou JPG
                 </div>
               </div>
             )}
           </button>
         </div>
-      ) : (
+      )}
+
+      {mode === 'presets' && presets.length > 0 && (
+        <div className="p-2.5 bg-white rounded-2xl border border-[#DDBFB2] space-y-2">
+          <span className="text-[10px] font-bold text-stone-500 block uppercase tracking-wider">
+            Selecione uma imagem pronta para este bônus:
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {presets.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => {
+                  onChange(preset.url);
+                  setSuccess(true);
+                  setTimeout(() => setSuccess(false), 2000);
+                }}
+                className={`p-1.5 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer overflow-hidden ${
+                  value === preset.url
+                    ? 'border-[#B87F6C] bg-[#FAF6F4] ring-2 ring-[#B87F6C]/30'
+                    : 'border-stone-200 hover:border-[#B87F6C]/60 bg-stone-50'
+                }`}
+              >
+                <div className="w-full h-16 rounded-lg overflow-hidden bg-stone-200 relative">
+                  <img src={preset.url} alt={preset.title} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[11px] font-bold text-stone-800 truncate block">
+                  {preset.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {mode === 'url' && (
         <div>
           <input
             type="text"
@@ -149,7 +188,7 @@ export function ImageUploader({
 
       {success && (
         <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-          <Check className="w-3.5 h-3.5" /> Foto carregada com sucesso!
+          <Check className="w-3.5 h-3.5" /> Imagem anexada com sucesso!
         </p>
       )}
 
@@ -158,7 +197,7 @@ export function ImageUploader({
         <div className="flex items-center gap-3 p-2.5 bg-white rounded-xl border border-[#EBDCD5] shadow-2xs">
           <div className="w-14 h-14 rounded-lg overflow-hidden border border-stone-200 bg-stone-100 shrink-0">
             <img
-              src={value}
+              src={resolveImageUrl(value)}
               alt="Pré-visualização"
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -168,17 +207,17 @@ export function ImageUploader({
           </div>
           <div className="flex-1 min-w-0">
             <span className="text-[11px] font-bold text-stone-800 block truncate">
-              Foto Selecionada
+              Imagem Anexada
             </span>
             <span className="text-[10px] text-stone-500 block truncate">
-              {value.startsWith('data:') ? 'Imagem carregada do dispositivo' : value}
+              {value.startsWith('data:') ? 'Foto do dispositivo (otimizada)' : value}
             </span>
           </div>
           <button
             type="button"
             onClick={() => onChange('')}
             className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-            title="Remover foto"
+            title="Remover imagem"
           >
             <X className="w-4 h-4" />
           </button>
