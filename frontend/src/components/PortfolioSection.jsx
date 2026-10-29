@@ -233,11 +233,12 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
       {selectedItem && (
         <div
           onClick={() => setSelectedItem(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-stone-950/80 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-50 flex justify-center p-2 sm:p-6 bg-stone-950/80 backdrop-blur-md animate-fadeIn overflow-y-auto"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col md:flex-row max-h-[92vh] relative"
+            style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+            className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col md:flex-row relative my-auto"
           >
             {/* Botão Fechar */}
             <button

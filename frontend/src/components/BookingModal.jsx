@@ -243,8 +243,11 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div
+        style={{ maxHeight: 'min(94vh, calc(100dvh - 1rem))' }}
+        className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col my-auto"
+      >
         
         {/* Header com barra de progresso */}
         <div className="bg-[#FAF6F4] p-5 border-b border-[#EBDCD5] relative">
@@ -498,7 +501,7 @@ export function BookingModal({ isOpen, onClose, services, stylists, initialServi
                             setSelectedDate(d.date);
                             setStep(4);
                           }}
-                          className={`min-h-14 sm:min-h-16 p-1.5 rounded-2xl text-center border transition-all flex flex-col items-center justify-between relative group ${
+                          className={`min-h-12 sm:min-h-16 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl text-center border transition-all flex flex-col items-center justify-between relative group min-w-0 ${
                             !isAvailable
                               ? 'opacity-35 bg-stone-100 border-stone-200 cursor-not-allowed text-stone-400'
                               : isSelected

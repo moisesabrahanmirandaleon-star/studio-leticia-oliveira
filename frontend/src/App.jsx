@@ -147,7 +147,7 @@ export default function App() {
         />
       ) : (
         /* SITE PÚBLICO DAS CLIENTES TOTALMENTE OTIMIZADO PARA MOBILE */
-        <div className="min-h-screen flex flex-col bg-[#FAF6F4] text-stone-800 selection:bg-[#CCA08F] selection:text-white">
+        <div className="min-h-screen flex flex-col bg-[#FAF6F4] text-stone-800 selection:bg-[#CCA08F] selection:text-white overflow-x-hidden">
           
           {/* Barra de Navegação com botão para instalar app e acesso da dona */}
           <Navbar

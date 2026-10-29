@@ -31,8 +31,11 @@ export function InstallPwaModal({ isOpen, onClose, deferredPrompt, onInstalled }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col p-6 animate-slideUp">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+      <div
+        style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#EBDCD5] overflow-hidden flex flex-col p-5 sm:p-6 animate-slideUp my-auto sm:my-auto"
+      >
         
         {/* Header com Ícone Oficial do App */}
         <div className="flex items-center justify-between mb-4">

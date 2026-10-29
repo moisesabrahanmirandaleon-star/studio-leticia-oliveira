@@ -1514,7 +1514,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#FAF6F4] text-stone-800 flex flex-col selection:bg-[#CCA08F] selection:text-white">
+    <div className="min-h-screen w-full bg-[#FAF6F4] text-stone-800 flex flex-col selection:bg-[#CCA08F] selection:text-white overflow-x-hidden">
       
       {/* Top Header Barra Superior Fixa */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#EBDCD5] px-4 sm:px-6 py-3 shadow-xs">
@@ -1596,7 +1596,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         <aside
           role="status"
           aria-live="polite"
-          className="fixed top-20 right-4 sm:right-6 z-50 max-w-sm sm:max-w-md w-full bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl p-4 sm:p-5 animate-slideDown"
+          className="fixed top-20 left-3 right-3 sm:left-auto sm:right-6 z-50 sm:max-w-md bg-white border-2 border-emerald-500 rounded-3xl shadow-2xl p-4 sm:p-5 animate-slideDown"
         >
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#FEF1E8] border border-[#EBDCD5] overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
@@ -2539,7 +2539,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       <div className="grid grid-cols-7 gap-1 sm:gap-2">
                         {/* Espaçamento vazio antes do dia 1 de acordo com o dayOfWeek inicial */}
                         {monthDays.length > 0 && Array.from({ length: monthDays[0].dayOfWeek }).map((_, i) => (
-                          <div key={`empty-${i}`} className="min-h-20 sm:min-h-24 bg-stone-50/50 rounded-2xl border border-stone-100" />
+                          <div key={`empty-${i}`} className="min-h-16 sm:min-h-24 bg-stone-50/50 rounded-xl sm:rounded-2xl border border-stone-100" />
                         ))}
 
                         {/* Dias Reais do Mês */}
@@ -2551,7 +2551,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             <div
                               key={dayItem.date}
                               onClick={() => handleDateClick(dayItem)}
-                              className={`min-h-20 sm:min-h-24 p-2 sm:p-2.5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative group ${
+                              className={`min-h-16 sm:min-h-24 p-1 sm:p-2.5 rounded-xl sm:rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative group min-w-0 ${
                                 isSelected
                                   ? 'ring-2 ring-[#B87F6C] bg-amber-50/80 border-[#B87F6C] shadow-sm'
                                   : dayItem.isOpen
@@ -2562,8 +2562,8 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               }`}
                             >
                               {/* Topo do Card: Checkbox de seleção, Número do dia e botão toggle */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
+                              <div className="flex items-center justify-between gap-0.5">
+                                <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
@@ -2571,11 +2571,11 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                       e.stopPropagation();
                                       toggleDateSelection(dayItem.date);
                                     }}
-                                    className="w-3.5 h-3.5 rounded text-[#B87F6C] focus:ring-[#B87F6C] cursor-pointer"
+                                    className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded text-[#B87F6C] focus:ring-[#B87F6C] cursor-pointer shrink-0"
                                     title="Selecionar este dia para edição em lote"
                                   />
                                   <span
-                                    className={`text-xs sm:text-sm font-bold font-serif w-6 h-6 flex items-center justify-center rounded-full ${
+                                    className={`text-[10px] sm:text-sm font-bold font-serif w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full shrink-0 ${
                                       isTodayDate
                                         ? 'bg-[#B87F6C] text-white shadow-sm'
                                         : 'text-stone-900'
@@ -2589,7 +2589,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 <button
                                   type="button"
                                   onClick={(e) => handleQuickToggleDay(dayItem, e)}
-                                  className={`p-1 rounded-full transition-transform active:scale-90 ${
+                                  className={`p-0.5 sm:p-1 rounded-full transition-transform active:scale-90 shrink-0 ${
                                     dayItem.isOpen
                                       ? 'text-emerald-600 hover:bg-emerald-100'
                                       : 'text-rose-500 hover:bg-rose-100'
@@ -2597,38 +2597,38 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                   title={dayItem.isOpen ? 'Clique para fechar este dia' : 'Clique para abrir este dia'}
                                 >
                                   {dayItem.isOpen ? (
-                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                   ) : (
-                                    <XCircle className="w-3.5 h-3.5" />
+                                    <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                   )}
                                 </button>
                               </div>
 
                               {/* Conteúdo Central: Horário e Status */}
-                              <div className="my-1">
+                              <div className="my-0.5 sm:my-1 min-w-0">
                                 {dayItem.isOpen ? (
                                   <div>
-                                    <span className="text-[10px] sm:text-[11px] font-bold text-stone-800 block truncate">
+                                    <span className="text-[8px] sm:text-[11px] font-bold text-stone-800 block truncate leading-tight">
                                       {dayItem.startTime} às {dayItem.endTime}
                                     </span>
                                     {dayItem.breakStart && (
-                                      <span className="text-[9px] text-stone-500 block truncate">
+                                      <span className="hidden sm:block text-[9px] text-stone-500 truncate">
                                         Pausa: {dayItem.breakStart}-{dayItem.breakEnd}
                                       </span>
                                     )}
                                     {dayItem.note && (
-                                      <span className="text-[9px] text-amber-700 font-medium block truncate">
+                                      <span className="text-[7px] sm:text-[9px] text-amber-700 font-medium block truncate">
                                         {dayItem.note}
                                       </span>
                                     )}
                                   </div>
                                 ) : (
                                   <div>
-                                    <span className="text-[10px] font-bold text-rose-600 block">
-                                      Folga / Fechado
+                                    <span className="text-[8px] sm:text-[10px] font-bold text-rose-600 block leading-tight">
+                                      Folga
                                     </span>
                                     {dayItem.note && (
-                                      <span className="text-[9px] text-stone-500 block truncate">
+                                      <span className="text-[7px] sm:text-[9px] text-stone-500 block truncate">
                                         {dayItem.note}
                                       </span>
                                     )}
@@ -2637,16 +2637,16 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               </div>
 
                               {/* Rodapé do Dia: Agendamentos marcados */}
-                              <div className="flex items-center justify-between text-[10px]">
+                              <div className="flex items-center justify-between text-[8px] sm:text-[10px] min-w-0">
                                 {dayItem.appointmentCount > 0 ? (
-                                  <span className="px-1.5 py-0.5 rounded-md bg-[#B87F6C] text-white font-bold">
-                                    {dayItem.appointmentCount} agendamento(s)
+                                  <span className="px-1 sm:px-1.5 py-0.5 rounded-md bg-[#B87F6C] text-white font-bold text-[7px] sm:text-[10px] truncate">
+                                    {dayItem.appointmentCount} <span className="hidden sm:inline">agendamento(s)</span><span className="sm:hidden">ag.</span>
                                   </span>
                                 ) : (
-                                  <span className="text-stone-400 text-[9px]">Livre</span>
+                                  <span className="text-stone-400 text-[8px] sm:text-[9px]">Livre</span>
                                 )}
 
-                                <Edit2 className="w-3 h-3 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Edit2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block" />
                               </div>
                             </div>
                           );
@@ -3974,15 +3974,18 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: GERENCIADOR DE BLOQUEIOS (MÊS, SEMANA, DIAS) */}
         {/* ========================================================= */}
         {showBlockModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold shrink-0">
                     <Ban className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                    <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                       Gerenciador de Bloqueios de Agenda
                     </h5>
                     <span className="text-[11px] text-stone-500">
@@ -3998,153 +4001,155 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </button>
               </div>
 
-              {/* Seletor do Tipo de Bloqueio */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold text-stone-700 uppercase">
-                  O que você deseja bloquear ou liberar?
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBlockType('MONTH');
-                      setBlockReason(`Mês de ${getMonthName(blockTargetMonth)} Lotado / Sem atendimento`);
-                    }}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                      blockType === 'MONTH'
-                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    🚫 Mês Inteiro
-                  </button>
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+                {/* Seletor do Tipo de Bloqueio */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase">
+                    O que você deseja bloquear ou liberar?
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBlockType('MONTH');
+                        setBlockReason(`Mês de ${getMonthName(blockTargetMonth)} Lotado / Sem atendimento`);
+                      }}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        blockType === 'MONTH'
+                          ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                      }`}
+                    >
+                      🚫 Mês Inteiro
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBlockType('RANGE');
-                      setBlockReason('Semana Bloqueada / Sem atendimento');
-                    }}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                      blockType === 'RANGE' || blockType === 'WEEK'
-                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    📅 Semana / Período
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBlockType('RANGE');
+                        setBlockReason('Semana Bloqueada / Sem atendimento');
+                      }}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        blockType === 'RANGE' || blockType === 'WEEK'
+                          ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                      }`}
+                    >
+                      📅 Semana / Período
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBlockType('DAYS');
-                      setBlockReason('Dias Bloqueados / Sem atendimento');
-                    }}
-                    className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                      blockType === 'DAYS'
-                        ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
-                        : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
-                    }`}
-                  >
-                    ❌ Dias Livres ({selectedDates.size})
-                  </button>
-                </div>
-              </div>
-
-              {/* Configurações conforme o tipo selecionado */}
-              {blockType === 'MONTH' && (
-                <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
-                  <span className="text-[11px] font-bold text-stone-700 block">
-                    Escolha o Mês para Aplicar a Regra:
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Mês</label>
-                      <select
-                        value={blockTargetMonth}
-                        onChange={(e) => {
-                          const m = Number(e.target.value);
-                          setBlockTargetMonth(m);
-                          setBlockReason(`Mês de ${getMonthName(m)} Lotado / Sem atendimento`);
-                        }}
-                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
-                          <option key={m} value={m}>
-                            {getMonthName(m)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Ano</label>
-                      <input
-                        type="number"
-                        value={blockTargetYear}
-                        onChange={(e) => setBlockTargetYear(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
-                      >
-                      </input>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBlockType('DAYS');
+                        setBlockReason('Dias Bloqueados / Sem atendimento');
+                      }}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                        blockType === 'DAYS'
+                          ? 'bg-[#B87F6C] text-white border-[#B87F6C] shadow-xs'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                      }`}
+                    >
+                      ❌ Dias Livres ({selectedDates.size})
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {(blockType === 'RANGE' || blockType === 'WEEK') && (
-                <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
-                  <span className="text-[11px] font-bold text-stone-700 block">
-                    Defina o Intervalo de Datas da Semana / Período:
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] text-stone-500 font-bold block mb-1">A partir de (Início):</label>
-                      <input
-                        type="date"
-                        value={blockStartDate}
-                        onChange={(e) => setBlockStartDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] text-stone-500 font-bold block mb-1">Até (Término):</label>
-                      <input
-                        type="date"
-                        value={blockEndDate}
-                        onChange={(e) => setBlockEndDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
-                      />
+                {/* Configurações conforme o tipo selecionado */}
+                {blockType === 'MONTH' && (
+                  <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
+                    <span className="text-[11px] font-bold text-stone-700 block">
+                      Escolha o Mês para Aplicar a Regra:
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-stone-500 font-bold block mb-1">Mês</label>
+                        <select
+                          value={blockTargetMonth}
+                          onChange={(e) => {
+                            const m = Number(e.target.value);
+                            setBlockTargetMonth(m);
+                            setBlockReason(`Mês de ${getMonthName(m)} Lotado / Sem atendimento`);
+                          }}
+                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => (
+                            <option key={m} value={m}>
+                              {getMonthName(m)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] text-stone-500 font-bold block mb-1">Ano</label>
+                        <input
+                          type="number"
+                          value={blockTargetYear}
+                          onChange={(e) => setBlockTargetYear(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                        >
+                        </input>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {blockType === 'DAYS' && (
-                <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
-                  {selectedDates.size === 0 ? (
-                    <span>⚠️ Ative o modo "Seleção Livre de Dias" no calendário para escolher os dias específicos antes de bloquear.</span>
-                  ) : (
-                    <span>Serão bloqueados <strong>{selectedDates.size} dia(s)</strong> selecionados no calendário.</span>
-                  )}
-                </div>
-              )}
+                {(blockType === 'RANGE' || blockType === 'WEEK') && (
+                  <div className="p-3 bg-[#FAF6F4] rounded-2xl border border-[#EBDCD5] space-y-2">
+                    <span className="text-[11px] font-bold text-stone-700 block">
+                      Defina o Intervalo de Datas da Semana / Período:
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-stone-500 font-bold block mb-1">A partir de (Início):</label>
+                        <input
+                          type="date"
+                          value={blockStartDate}
+                          onChange={(e) => setBlockStartDate(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-stone-500 font-bold block mb-1">Até (Término):</label>
+                        <input
+                          type="date"
+                          value={blockEndDate}
+                          onChange={(e) => setBlockEndDate(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {/* Motivo do Bloqueio */}
-              <div>
-                <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                  Motivo que será exibido (Ex: Mês Lotado, Férias, Sem atendimento):
-                </label>
-                <input
-                  type="text"
-                  value={blockReason}
-                  onChange={(e) => setBlockReason(e.target.value)}
-                  placeholder="Ex: Mês de Novembro Lotado"
-                  className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
-                />
+                {blockType === 'DAYS' && (
+                  <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900">
+                    {selectedDates.size === 0 ? (
+                      <span>⚠️ Ative o modo "Seleção Livre de Dias" no calendário para escolher os dias específicos antes de bloquear.</span>
+                    ) : (
+                      <span>Serão bloqueados <strong>{selectedDates.size} dia(s)</strong> selecionados no calendário.</span>
+                    )}
+                  </div>
+                )}
+
+                {/* Motivo do Bloqueio */}
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                    Motivo que será exibido (Ex: Mês Lotado, Férias, Sem atendimento):
+                  </label>
+                  <input
+                    type="text"
+                    value={blockReason}
+                    onChange={(e) => setBlockReason(e.target.value)}
+                    placeholder="Ex: Mês de Novembro Lotado"
+                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                  />
+                </div>
               </div>
 
               {/* Ações */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <div className="p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60 flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   disabled={blockingPeriod}
@@ -4179,15 +4184,18 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: CRIAR / EDITAR CAMPANHA DE BÔNUS */}
         {/* ========================================================= */}
         {showCampaignModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold shrink-0">
                     <Gift className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                    <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                       {editingCampaignId ? 'Editar Campanha de Bônus' : 'Criar Nova Campanha de Bônus'}
                     </h5>
                     <span className="text-[11px] text-stone-500">
@@ -4203,7 +4211,8 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </button>
               </div>
 
-              <form onSubmit={handleSaveCampaign} className="space-y-4">
+              <form onSubmit={handleSaveCampaign} className="flex flex-col flex-1 overflow-hidden min-h-0">
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
@@ -4421,8 +4430,9 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     Publicar imediatamente na página principal do site
                   </label>
                 </div>
+              </div>
 
-                <div className="pt-2 flex gap-2">
+              <div className="p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60 flex gap-2">
                   <button
                     type="submit"
                     disabled={savingCampaign}
@@ -4433,7 +4443,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   <button
                     type="button"
                     onClick={() => setShowCampaignModal(false)}
-                    className="py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
+                    className="py-3 px-4 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
                   >
                     Cancelar
                   </button>
@@ -4447,31 +4457,44 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: MOTIVO DA RECUSA DE BÔNUS */}
         {/* ========================================================= */}
         {noteModalApp && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div>
-                <h5 className="font-serif font-bold text-stone-900 text-base">
-                  Recusar Solicitação de Bônus
-                </h5>
-                <p className="text-xs text-stone-500 mt-1">
-                  Cliente: <strong>{noteModalApp.clientName}</strong> ({formatPhoneDisplay(noteModalApp.clientPhone)})
-                </p>
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="p-4 sm:p-5 border-b border-stone-100 shrink-0 bg-white flex items-center justify-between">
+                <div>
+                  <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base">
+                    Recusar Solicitação de Bônus
+                  </h5>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    Cliente: <strong>{noteModalApp.clientName}</strong> ({formatPhoneDisplay(noteModalApp.clientPhone)})
+                  </p>
+                </div>
+                <button
+                  onClick={() => setNoteModalApp(null)}
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
-                  Motivo da Recusa (Opcional - visível para a cliente):
-                </label>
-                <input
-                  type="text"
-                  value={adminNoteInput}
-                  onChange={(e) => setAdminNoteInput(e.target.value)}
-                  placeholder="Ex: Campanha válida apenas para novos agendamentos"
-                  className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
-                />
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 uppercase mb-1">
+                    Motivo da Recusa (Opcional - visível para a cliente):
+                  </label>
+                  <input
+                    type="text"
+                    value={adminNoteInput}
+                    onChange={(e) => setAdminNoteInput(e.target.value)}
+                    placeholder="Ex: Campanha válida apenas para novos agendamentos"
+                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2] text-xs bg-white outline-none"
+                  />
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60 flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -4485,7 +4508,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 <button
                   type="button"
                   onClick={() => setNoteModalApp(null)}
-                  className="py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
+                  className="py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -4498,15 +4521,18 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: GERADOR DE ESCALA EM LOTE */}
         {/* ========================================================= */}
         {showBatchModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-[#7E4E40] flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-[#7E4E40] flex items-center justify-center font-bold shrink-0">
                     <Sliders className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                    <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                       Gerador de Escala de Trabalho
                     </h5>
                     <span className="text-[11px] text-stone-500">
@@ -4516,13 +4542,13 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </div>
                 <button
                   onClick={() => setShowBatchModal(false)}
-                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100"
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5 text-xs">
                 {/* Escolha da Regra / Preset */}
                 <div>
                   <label className="block font-bold text-stone-700 uppercase tracking-wider mb-1.5">
@@ -4539,12 +4565,12 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           : 'bg-white border-[#EBDCD5] text-stone-700 hover:border-[#B87F6C]'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <span className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-[#7E4E40]">
-                          <Calendar className="w-4 h-4 text-[#B87F6C]" />
-                          Escala 2 Empregos (Ímpares & Pares Juntos)
+                          <Calendar className="w-4 h-4 text-[#B87F6C] shrink-0" />
+                          Escala 2 Empregos (Ímpares & Pares)
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-[#B87F6C] text-white text-[10px] font-bold">
+                        <span className="self-start sm:self-auto px-2 py-0.5 rounded-full bg-[#B87F6C] text-white text-[10px] font-bold">
                           Recomendado
                         </span>
                       </div>
@@ -4556,78 +4582,78 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     <button
                       type="button"
                       onClick={() => setBatchPreset('ODD_DAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'ODD_DAYS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Apenas Dias Ímpares</span>
+                      <span className="block truncate">Apenas Dias Ímpares</span>
                       <span className="text-[10px] block font-normal text-stone-500">1, 3, 5, 7, 9...</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('EVEN_DAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'EVEN_DAYS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Apenas Dias Pares</span>
+                      <span className="block truncate">Apenas Dias Pares</span>
                       <span className="text-[10px] block font-normal text-stone-500">2, 4, 6, 8, 10...</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('PATTERN_1X1')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'PATTERN_1X1'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Escala 1x1 (Dia sim, dia não)</span>
+                      <span className="block truncate">Escala 1x1 (Dia sim/não)</span>
                       <span className="text-[10px] block font-normal text-stone-500">Alternado dia a dia</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('PATTERN_2X2')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'PATTERN_2X2'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Escala 2x2</span>
+                      <span className="block truncate">Escala 2x2</span>
                       <span className="text-[10px] block font-normal text-stone-500">2 trabalha, 2 folga</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('WEEKDAYS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'WEEKDAYS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Segunda a Sexta</span>
+                      <span className="block truncate">Segunda a Sexta</span>
                       <span className="text-[10px] block font-normal text-stone-500">Dias úteis</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setBatchPreset('WEEKENDS')}
-                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer ${
+                      className={`p-2.5 rounded-xl border text-left font-bold transition-all cursor-pointer min-w-0 ${
                         batchPreset === 'WEEKENDS'
                           ? 'bg-amber-100 border-[#B87F6C] text-[#7E4E40]'
                           : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                       }`}
                     >
-                      <span>Apenas Finais de Semana</span>
+                      <span className="block truncate">Finais de Semana</span>
                       <span className="text-[10px] block font-normal text-stone-500">Sábados e Domingos</span>
                     </button>
 
@@ -4655,14 +4681,14 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   <div className="space-y-3 pt-2">
                     {/* Bloco 1: Dias Ímpares */}
                     <div className="p-3.5 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] space-y-2.5">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span className="font-extrabold text-[#7E4E40] text-xs flex items-center gap-1.5">
                           <span>📅 DIAS ÍMPARES (1, 3, 5, 7, 9...)</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => setDualOddOpen(!dualOddOpen)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer self-start sm:self-auto ${
                             dualOddOpen
                               ? 'bg-emerald-600 text-white'
                               : 'bg-rose-600 text-white'
@@ -4675,7 +4701,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       {dualOddOpen ? (
                         <div className="space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
                                 Início:
                               </label>
@@ -4686,7 +4712,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
                               />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
                                 Fim:
                               </label>
@@ -4699,7 +4725,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
                                 Pausa Início (opcional):
                               </label>
@@ -4710,7 +4736,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
                               />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
                                 Pausa Fim (opcional):
                               </label>
@@ -4741,14 +4767,14 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                     {/* Bloco 2: Dias Pares */}
                     <div className="p-3.5 rounded-2xl bg-white border border-[#DDBFB2] space-y-2.5 shadow-xs">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span className="font-extrabold text-stone-800 text-xs flex items-center gap-1.5">
                           <span>📅 DIAS PARES (2, 4, 6, 8, 10...)</span>
                         </span>
                         <button
                           type="button"
                           onClick={() => setDualEvenOpen(!dualEvenOpen)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer self-start sm:self-auto ${
                             dualEvenOpen
                               ? 'bg-emerald-600 text-white'
                               : 'bg-rose-600 text-white'
@@ -4761,7 +4787,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       {dualEvenOpen ? (
                         <div className="space-y-2">
                           <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
                                 Início:
                               </label>
@@ -4772,7 +4798,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs font-semibold"
                               />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-bold text-stone-600 mb-0.5">
                                 Fim:
                               </label>
@@ -4785,7 +4811,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
                                 Pausa Início (opcional):
                               </label>
@@ -4796,7 +4822,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 className="w-full px-2.5 py-1.5 rounded-xl border border-[#DDBFB2] bg-white text-xs"
                               />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <label className="block text-[10px] font-medium text-stone-500 mb-0.5">
                                 Pausa Fim (opcional):
                               </label>
@@ -4829,7 +4855,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   /* FORMULÁRIO 2: MODO PADRÃO INDIVIDUAL OU DATAS SELECIONADAS */
                   <div className="space-y-3 pt-2">
                     {/* Status de Atendimento Aberto ou Fechado */}
-                    <div className="p-3 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] flex items-center justify-between">
+                    <div className="p-3 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <span className="font-bold text-stone-900 block text-xs">
                           Status dos Dias Selecionados
@@ -4841,7 +4867,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       <button
                         type="button"
                         onClick={() => setBatchIsOpen(!batchIsOpen)}
-                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-colors cursor-pointer self-start sm:self-auto ${
                           batchIsOpen ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
                         }`}
                       >
@@ -4853,7 +4879,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       <>
                         {/* Horários aplicados */}
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[11px] font-bold text-stone-700 mb-1">
                               Início do Atendimento:
                             </label>
@@ -4865,7 +4891,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             />
                           </div>
 
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[11px] font-bold text-stone-700 mb-1">
                               Fim do Atendimento:
                             </label>
@@ -4880,7 +4906,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
 
                         {/* Intervalo de Almoço */}
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[11px] font-bold text-stone-700 mb-1">
                               Início do Almoço:
                             </label>
@@ -4892,7 +4918,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                             />
                           </div>
 
-                          <div>
+                          <div className="min-w-0">
                             <label className="block text-[11px] font-bold text-stone-700 mb-1">
                               Fim do Almoço:
                             </label>
@@ -4944,11 +4970,11 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+              <div className="flex items-center justify-end gap-2 p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60">
                 <button
                   type="button"
                   onClick={() => setShowBatchModal(false)}
-                  className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-bold cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -4956,7 +4982,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   type="button"
                   disabled={applyingBatch}
                   onClick={handleApplyBatchSchedule}
-                  className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {applyingBatch ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -4974,11 +5000,14 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: AJUSTE FINO DE UM DIA ESPECÍFICO */}
         {/* ========================================================= */}
         {selectedDayDetail && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div>
-                  <h5 className="font-serif font-bold text-stone-900 text-base">
+                  <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                     Configuração do Dia {selectedDayDetail.day}
                   </h5>
                   <span className="text-[11px] text-stone-500 font-medium">
@@ -4987,13 +5016,13 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </div>
                 <button
                   onClick={() => setSelectedDayDetail(null)}
-                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100"
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="space-y-4 text-xs">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs">
                 {/* Toggle Aberto ou Fechado */}
                 <div className="p-3 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] flex items-center justify-between">
                   <div>
@@ -5132,11 +5161,11 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+              <div className="flex items-center justify-end gap-2 p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60">
                 <button
                   type="button"
                   onClick={() => setSelectedDayDetail(null)}
-                  className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold"
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-bold cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -5144,7 +5173,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                   type="button"
                   disabled={savingDayDetail}
                   onClick={handleSaveDayDetail}
-                  className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-md flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {savingDayDetail ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -5162,15 +5191,18 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: NOVO AGENDAMENTO MANUAL PELA DONA */}
         {/* ========================================================= */}
         {showNewAppointmentModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-[#FAF6F4] text-[#B87F6C] flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-[#FAF6F4] text-[#B87F6C] flex items-center justify-center font-bold shrink-0">
                     <Plus className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="font-serif font-bold text-stone-900 text-base">
+                    <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                       Novo Agendamento Manual
                     </h5>
                     <span className="text-[11px] text-stone-500">
@@ -5180,135 +5212,137 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 </div>
                 <button
                   onClick={() => setShowNewAppointmentModal(false)}
-                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100"
+                  className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateManualAppointment} className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-bold text-stone-700 uppercase mb-1">
-                    Nome Completo da Cliente *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newAppClientName}
-                    onChange={(e) => setNewAppClientName(e.target.value)}
-                    placeholder="Ex: Amanda Silva"
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-stone-700 uppercase mb-1">
-                    WhatsApp da Cliente (Brasil) *
-                  </label>
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3 flex items-center gap-1.5 pointer-events-none select-none text-xs font-bold text-stone-700">
-                      <span className="text-sm">🇧🇷</span>
-                      <span>+55</span>
-                      <span className="text-stone-300">|</span>
-                    </div>
+              <form onSubmit={handleCreateManualAppointment} className="flex flex-col flex-1 overflow-hidden min-h-0">
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5 text-xs">
+                  <div>
+                    <label className="block font-bold text-stone-700 uppercase mb-1">
+                      Nome Completo da Cliente *
+                    </label>
                     <input
                       type="text"
                       required
-                      value={newAppClientPhone}
-                      onChange={(e) => setNewAppClientPhone(formatBrazilianPhoneInput(e.target.value))}
-                      placeholder="(51) 98047-0713"
-                      className="w-full pl-20 pr-3 py-2 rounded-xl border border-[#DDBFB2]"
-                    />
-                  </div>
-                  <span className="text-[10px] text-stone-500 block mt-1">
-                    Padrão Brasil (+55). Insira DDD e número da cliente.
-                  </span>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-stone-700 uppercase mb-1">
-                    Procedimento / Serviço *
-                  </label>
-                  <select
-                    value={newAppServiceId}
-                    onChange={(e) => setNewAppServiceId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  >
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} — R$ {s.price.toFixed(2)} ({s.durationMinutes} min)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-bold text-stone-700 uppercase mb-1">
-                      Data *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={newAppDate}
-                      onChange={(e) => setNewAppDate(e.target.value)}
+                      value={newAppClientName}
+                      onChange={(e) => setNewAppClientName(e.target.value)}
+                      placeholder="Ex: Amanda Silva"
                       className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
                     />
                   </div>
 
                   <div>
                     <label className="block font-bold text-stone-700 uppercase mb-1">
-                      Horário de Início *
+                      WhatsApp da Cliente (Brasil) *
+                    </label>
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3 flex items-center gap-1.5 pointer-events-none select-none text-xs font-bold text-stone-700">
+                        <span className="text-sm">🇧🇷</span>
+                        <span>+55</span>
+                        <span className="text-stone-300">|</span>
+                      </div>
+                      <input
+                        type="text"
+                        required
+                        value={newAppClientPhone}
+                        onChange={(e) => setNewAppClientPhone(formatBrazilianPhoneInput(e.target.value))}
+                        placeholder="(51) 98047-0713"
+                        className="w-full pl-20 pr-3 py-2 rounded-xl border border-[#DDBFB2]"
+                      />
+                    </div>
+                    <span className="text-[10px] text-stone-500 block mt-1">
+                      Padrão Brasil (+55). Insira DDD e número da cliente.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 uppercase mb-1">
+                      Procedimento / Serviço *
+                    </label>
+                    <select
+                      value={newAppServiceId}
+                      onChange={(e) => setNewAppServiceId(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                    >
+                      {services.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} — R$ {s.price.toFixed(2)} ({s.durationMinutes} min)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="min-w-0">
+                      <label className="block font-bold text-stone-700 uppercase mb-1">
+                        Data *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={newAppDate}
+                        onChange={(e) => setNewAppDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <label className="block font-bold text-stone-700 uppercase mb-1">
+                        Horário de Início *
+                      </label>
+                      <input
+                        type="time"
+                        required
+                        value={newAppTime}
+                        onChange={(e) => setNewAppTime(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 uppercase mb-1">
+                      Forma de Pagamento
+                    </label>
+                    <select
+                      value={newAppPaymentMethod}
+                      onChange={(e) => setNewAppPaymentMethod(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
+                    >
+                      <option value="PRESENCIAL">Pagar no Local (Presencial)</option>
+                      <option value="ONLINE">Pagamento Antecipado / Pix</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-stone-700 uppercase mb-1">
+                      Observações Internas (Opcional)
                     </label>
                     <input
-                      type="time"
-                      required
-                      value={newAppTime}
-                      onChange={(e) => setNewAppTime(e.target.value)}
+                      type="text"
+                      value={newAppNotes}
+                      onChange={(e) => setNewAppNotes(e.target.value)}
+                      placeholder="Ex: Alérgica a esmalte, prefere sobrancelha mais marcada"
                       className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-stone-700 uppercase mb-1">
-                    Forma de Pagamento
-                  </label>
-                  <select
-                    value={newAppPaymentMethod}
-                    onChange={(e) => setNewAppPaymentMethod(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  >
-                    <option value="PRESENCIAL">Pagar no Local (Presencial)</option>
-                    <option value="ONLINE">Pagamento Antecipado / Pix</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-bold text-stone-700 uppercase mb-1">
-                    Observações Internas (Opcional)
-                  </label>
-                  <input
-                    type="text"
-                    value={newAppNotes}
-                    onChange={(e) => setNewAppNotes(e.target.value)}
-                    placeholder="Ex: Alérgica a esmalte, prefere sobrancelha mais marcada"
-                    className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+                <div className="flex items-center justify-end gap-2 p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60">
                   <button
                     type="button"
                     onClick={() => setShowNewAppointmentModal(false)}
-                    className="px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold"
+                    className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 font-bold text-xs cursor-pointer"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={creatingApp}
-                    className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold shadow-md flex items-center gap-1.5"
+                    className="px-5 py-2.5 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     {creatingApp ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -5327,33 +5361,38 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {/* MODAL: PRÉ-VISUALIZAÇÃO DA POLÍTICA & AVISO OFICIAL */}
         {/* ========================================================= */}
         {showPolicyModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-white w-full max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl border border-[#DDBFB2] space-y-4">
-              <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="fixed inset-0 z-60 flex justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border border-[#DDBFB2] flex flex-col overflow-hidden my-auto"
+            >
+              <div className="flex items-center justify-between border-b border-stone-100 p-4 sm:p-5 shrink-0 bg-white">
                 <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-[#B87F6C]" />
-                  <h5 className="font-serif font-bold text-stone-900 text-base">
+                  <MessageCircle className="w-4 h-4 text-[#B87F6C] shrink-0" />
+                  <h5 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                     Modelo do Aviso Oficial de Confirmação
                   </h5>
                 </div>
                 <button
                   onClick={() => setShowPolicyModal(false)}
-                  className="p-1 rounded-lg text-stone-400 hover:bg-stone-100"
+                  className="p-1 rounded-lg text-stone-400 hover:bg-stone-100 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="p-4 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] text-xs text-stone-800 whitespace-pre-line leading-relaxed font-mono select-all">
-                {formatNoticeMessage({
-                  date: todayDateStr,
-                  startTime: '14:00',
-                  clientName: 'Nome da Cliente',
-                  service: { name: 'Design com Henna' }
-                })}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 text-xs">
+                <div className="p-4 rounded-2xl bg-[#FAF6F4] border border-[#EBDCD5] text-xs text-stone-800 whitespace-pre-line leading-relaxed font-mono select-all">
+                  {formatNoticeMessage({
+                    date: todayDateStr,
+                    startTime: '14:00',
+                    clientName: 'Nome da Cliente',
+                    service: { name: 'Design com Henna' }
+                  })}
+                </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs p-3.5 sm:p-4 border-t border-stone-100 shrink-0 bg-stone-50/60">
                 <span className="text-stone-500">
                   Você pode editar o endereço e as regras na aba <strong>Studio & Perfil</strong>!
                 </span>
@@ -5369,7 +5408,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                     );
                     alert('Modelo copiado!');
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#B87F6C] text-white font-bold flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer shrink-0"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   <span>Copiar Modelo</span>
@@ -5451,11 +5490,12 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
         {expandedBonusAdmin && (
           <div
             onClick={() => setExpandedBonusAdmin(null)}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn"
+            className="fixed inset-0 z-[120] flex justify-center p-2 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl max-w-2xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative"
+              style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+              className="bg-white rounded-3xl max-w-2xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col relative my-auto"
             >
               <button
                 onClick={() => setExpandedBonusAdmin(null)}
@@ -5465,35 +5505,35 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="p-4 bg-[#FAF6F4] border-b border-[#EBDCD5] flex items-center justify-between gap-3 pr-14">
+              <div className="p-4 bg-[#FAF6F4] border-b border-[#EBDCD5] flex items-center justify-between gap-3 pr-14 shrink-0">
                 <div className="flex items-center gap-2">
                   <Gift className="w-5 h-5 text-[#B87F6C]" />
-                  <h4 className="font-serif font-bold text-stone-900 text-base">
+                  <h4 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-tight">
                     {expandedBonusAdmin.title || 'Foto do Bônus'}
                   </h4>
                 </div>
-                <span className="text-[11px] font-bold text-stone-500 uppercase">
+                <span className="text-[10px] sm:text-[11px] font-bold text-stone-500 uppercase shrink-0">
                   {expandedBonusAdmin.badgeText || 'Tempo Limitado'}
                 </span>
               </div>
 
-              <div className="p-3 sm:p-6 bg-stone-900 flex items-center justify-center overflow-auto flex-1 min-h-[260px] max-h-[65vh]">
+              <div className="p-3 sm:p-6 bg-stone-900 flex items-center justify-center overflow-auto flex-1 min-h-[220px] max-h-[60dvh]">
                 <img
                   src={resolveImageUrl(expandedBonusAdmin.imageUrl)}
                   alt="Ampliação"
-                  className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-xl shadow-2xl"
+                  className="w-auto h-auto max-w-full max-h-[55dvh] object-contain rounded-xl shadow-2xl"
                 />
               </div>
 
-              <div className="p-4 bg-white border-t border-[#EBDCD5] flex items-center justify-between">
-                <p className="text-xs text-stone-500 truncate">
+              <div className="p-3.5 sm:p-4 bg-white border-t border-[#EBDCD5] flex items-center justify-between shrink-0">
+                <p className="text-xs text-stone-500 truncate mr-2">
                   Visualização de alta resolução como a cliente verá ao clicar.
                 </p>
                 <button
                   onClick={() => setExpandedBonusAdmin(null)}
-                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0"
                 >
-                  Fechar Visualização
+                  Fechar
                 </button>
               </div>
             </div>

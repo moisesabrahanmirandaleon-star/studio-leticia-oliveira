@@ -299,11 +299,12 @@ export function BonusSection({ onOpenBooking }) {
       {expandedBonusCampaign && (
         <div
           onClick={() => setExpandedBonusCampaign(null)}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex justify-center p-2 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn overflow-y-auto"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl max-w-3xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] relative"
+            style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+            className="bg-white rounded-3xl max-w-3xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col relative my-auto"
           >
             {/* Botão Fechar no Canto */}
             <button
@@ -373,8 +374,11 @@ export function BonusSection({ onOpenBooking }) {
       {/* MODAL: SOLICITAR BÔNUS                                  */}
       {/* ======================================================== */}
       {selectedCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#EBDCD5] relative max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div
+            style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+            className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-8 shadow-2xl border border-[#EBDCD5] relative overflow-y-auto my-auto"
+          >
             
             <button
               onClick={() => setSelectedCampaign(null)}
@@ -592,8 +596,11 @@ export function BonusSection({ onOpenBooking }) {
       {/* MODAL: CONSULTAR STATUS DO BÔNUS                        */}
       {/* ======================================================== */}
       {showStatusModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#EBDCD5] relative max-h-[90vh] overflow-y-auto space-y-6">
+        <div className="fixed inset-0 z-50 flex justify-center p-2 sm:p-4 bg-stone-900/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div
+            style={{ maxHeight: 'min(92vh, calc(100dvh - 1rem))' }}
+            className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-8 shadow-2xl border border-[#EBDCD5] relative overflow-y-auto space-y-6 my-auto"
+          >
             
             <button
               onClick={() => setShowStatusModal(false)}
