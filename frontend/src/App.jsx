@@ -164,7 +164,7 @@ export default function App() {
               onSelectService={(service) => handleOpenBooking(service)}
             />
 
-            <AboutSection />
+            <AboutSection onOpenBooking={() => handleOpenBooking(null)} />
 
             <PortfolioSection
               portfolioItems={portfolioItems}
