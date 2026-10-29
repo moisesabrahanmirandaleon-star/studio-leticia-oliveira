@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, Sparkles, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle } from 'lucide-react';
+import { Gift, Sparkles, Clock, CheckCircle2, ShieldCheck, Tag, Search, ArrowRight, X, AlertCircle, Heart, Phone, MessageCircle, Maximize2 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatBrazilianPhoneInput, formatPhoneDisplay } from '../utils/phoneUtils';
 import { resolveImageUrl } from '../services/imageUtils';
@@ -7,6 +7,9 @@ import { resolveImageUrl } from '../services/imageUtils';
 export function BonusSection({ onOpenBooking }) {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Modal de Ampliação / Expansão do Cupom de Bônus
+  const [expandedBonusCampaign, setExpandedBonusCampaign] = useState(null);
 
   // Modal de Aplicação de Bônus
   const [selectedCampaign, setSelectedCampaign] = useState(null);
@@ -28,6 +31,19 @@ export function BonusSection({ onOpenBooking }) {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  // Fechar modais ao pressionar tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (expandedBonusCampaign) setExpandedBonusCampaign(null);
+        else if (selectedCampaign) setSelectedCampaign(null);
+        else if (showStatusModal) setShowStatusModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [expandedBonusCampaign, selectedCampaign, showStatusModal]);
 
   const loadCampaigns = async () => {
     try {
@@ -183,13 +199,17 @@ export function BonusSection({ onOpenBooking }) {
                     )}
                   </div>
 
-                  {/* Foto da Campanha com Fallback Gracioso */}
+                  {/* Foto / Banner da Campanha com Ampliação em Tela Cheia */}
                   {camp.imageUrl ? (
-                    <div className="w-full h-40 rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-stone-100">
+                    <div
+                      onClick={() => setExpandedBonusCampaign(camp)}
+                      className="w-full min-h-[190px] sm:min-h-[210px] rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-gradient-to-br from-[#FAF6F4] via-[#F5ECE8] to-[#EBDCD5] cursor-pointer group/img shadow-inner flex items-center justify-center"
+                      title="Clique para ver o cupom completo em tela cheia"
+                    >
                       <img
                         src={resolveImageUrl(camp.imageUrl)}
                         alt={camp.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-contain sm:object-cover group-hover/img:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                           const fb = e.currentTarget.parentElement?.querySelector('.card-fallback-banner');
@@ -202,6 +222,21 @@ export function BonusSection({ onOpenBooking }) {
                           <span className="font-serif text-sm font-bold text-stone-800">{camp.title}</span>
                           <span className="text-[10px] text-stone-500 uppercase tracking-wider font-semibold">Studio Letícia Oliveira</span>
                         </div>
+                      </div>
+
+                      {/* Botão Flutuante de Ampliação */}
+                      <div className="absolute bottom-2.5 right-2.5 z-10">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedBonusCampaign(camp);
+                          }}
+                          className="px-2.5 py-1 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all cursor-pointer hover:scale-105"
+                        >
+                          <Maximize2 className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Clique para Ampliar</span>
+                        </button>
                       </div>
                     </div>
                   ) : null}
@@ -257,6 +292,82 @@ export function BonusSection({ onOpenBooking }) {
         </div>
 
       </div>
+
+      {/* ======================================================== */}
+      {/* MODAL LIGHTBOX: FOTO EXPANDIDA DO BÔNUS / CUPOM          */}
+      {/* ======================================================== */}
+      {expandedBonusCampaign && (
+        <div
+          onClick={() => setExpandedBonusCampaign(null)}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-3xl max-w-3xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] relative"
+          >
+            {/* Botão Fechar no Canto */}
+            <button
+              onClick={() => setExpandedBonusCampaign(null)}
+              className="absolute top-4 right-4 z-20 p-2 rounded-full bg-stone-900/70 hover:bg-stone-900 text-white transition-colors cursor-pointer shadow-md"
+              title="Fechar (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Cabeçalho do Cupom */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#FAF6F4] via-[#F5ECE8] to-[#FAF6F4] border-b border-[#EBDCD5] flex items-center justify-between gap-3 pr-14">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-[#EBDCD5] text-[#7E4E40] flex items-center justify-center shrink-0">
+                  <Gift className="w-5 h-5 text-[#B87F6C]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#B87F6C] block">
+                    {expandedBonusCampaign.badgeText || 'Vantagem Exclusiva'}
+                  </span>
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-stone-900 leading-tight">
+                    {expandedBonusCampaign.title}
+                  </h3>
+                </div>
+              </div>
+
+              <span className="px-3 py-1 rounded-full bg-[#B87F6C] text-white text-xs font-bold shrink-0 shadow-xs">
+                {expandedBonusCampaign.discountType === 'PERCENT' && `${expandedBonusCampaign.discountValue}% OFF`}
+                {expandedBonusCampaign.discountType === 'FIXED' && `R$ ${expandedBonusCampaign.discountValue} OFF`}
+                {expandedBonusCampaign.discountType === 'GIFT' && (expandedBonusCampaign.giftName || 'Brinde')}
+              </span>
+            </div>
+
+            {/* Imagem Ampliada em Alta Resolução */}
+            <div className="p-3 sm:p-6 bg-stone-950 flex items-center justify-center overflow-auto flex-1 min-h-[300px] max-h-[66vh]">
+              <img
+                src={resolveImageUrl(expandedBonusCampaign.imageUrl)}
+                alt={expandedBonusCampaign.title}
+                className="w-auto h-auto max-w-full max-h-[62vh] object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+
+            {/* Rodapé com Ação */}
+            <div className="p-4 sm:p-5 bg-white border-t border-[#EBDCD5] flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-xs text-stone-600 leading-relaxed text-center sm:text-left flex-1">
+                {expandedBonusCampaign.description || 'Apresente este voucher ou solicite online para garantir seu benefício no Studio Letícia Oliveira.'}
+              </p>
+
+              <button
+                onClick={() => {
+                  const camp = expandedBonusCampaign;
+                  setExpandedBonusCampaign(null);
+                  handleOpenApplyModal(camp);
+                }}
+                className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#B87F6C] hover:bg-[#A06654] text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <span>Solicitar Este Bônus</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* MODAL: SOLICITAR BÔNUS                                  */}
@@ -321,13 +432,17 @@ export function BonusSection({ onOpenBooking }) {
               </div>
             ) : (
               <form onSubmit={handleSubmitApplication} className="space-y-5">
-                {/* Banner Visual Ilustrativo do Bônus ao Aplicar */}
+                {/* Banner Visual Ilustrativo do Bônus ao Aplicar com Opção de Ampliar */}
                 {selectedCampaign.imageUrl ? (
-                  <div className="w-full h-44 rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-stone-100 shadow-inner">
+                  <div
+                    onClick={() => setExpandedBonusCampaign(selectedCampaign)}
+                    className="w-full min-h-[180px] max-h-[260px] rounded-2xl overflow-hidden border border-[#EBDCD5] relative bg-stone-900 cursor-pointer group/modalimg shadow-inner flex items-center justify-center"
+                    title="Clique para ver o cupom completo em tela cheia"
+                  >
                     <img
                       src={resolveImageUrl(selectedCampaign.imageUrl)}
                       alt={selectedCampaign.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain group-hover/modalimg:scale-102 transition-transform duration-300"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                         const fb = e.currentTarget.parentElement?.querySelector('.modal-fallback-banner');
@@ -346,6 +461,14 @@ export function BonusSection({ onOpenBooking }) {
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/95 backdrop-blur-xs text-[#B87F6C] text-[11px] font-bold shadow-sm">
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                         {selectedCampaign.badgeText || 'Tempo Limitado'}
+                      </span>
+                    </div>
+
+                    {/* Botão de Ampliação */}
+                    <div className="absolute bottom-2.5 right-2.5">
+                      <span className="px-2.5 py-1 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] font-bold flex items-center gap-1.5 shadow-md backdrop-blur-xs">
+                        <Maximize2 className="w-3.5 h-3.5 text-amber-300" />
+                        <span>Ampliar Cupom</span>
                       </span>
                     </div>
                   </div>

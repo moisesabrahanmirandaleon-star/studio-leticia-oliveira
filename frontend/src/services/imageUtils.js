@@ -70,11 +70,13 @@ export async function compressImageFile(file, maxWidth = 1000, maxHeight = 1000,
 
 /**
  * Resolve qualquer URL de imagem, seja ela Base64 (data:), externa (https://)
- * ou caminho relativo do backend (/uploads/...), prevenindo erros 404 entre Vercel e Render.
+ * ou caminho relativo do frontend (/catalogo/...) ou backend (/uploads/...), prevenindo erros 404 entre Vercel e Render.
  */
 export function resolveImageUrl(url) {
   if (!url || typeof url !== 'string') return '';
   const trimmed = url.trim();
+
+  // 1. Dados em Base64, Blob ou URLs absolutas externas (http:// ou https://)
   if (
     trimmed.startsWith('data:') ||
     trimmed.startsWith('blob:') ||
@@ -84,11 +86,17 @@ export function resolveImageUrl(url) {
     return trimmed;
   }
 
-  // Se for caminho relativo (ex: /uploads/...)
-  const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
-  const backendOrigin = apiBase.replace(/\/api\/?$/, '');
-  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `${backendOrigin}${cleanPath}`;
+  // 2. Uploads salvos no backend (ex: /uploads/...)
+  if (trimmed.startsWith('/uploads') || trimmed.startsWith('uploads')) {
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+    const backendOrigin = apiBase.replace(/\/api\/?$/, '');
+    const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `${backendOrigin}${cleanPath}`;
+  }
+
+  // 3. Imagens e arquivos estáticos locais do frontend (ex: /catalogo/..., /leticia-perfil.jpg, /tabela-valores.jpg)
+  // Devem permanecer como caminho relativo para que o navegador busque diretamente no Vercel
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
 /**

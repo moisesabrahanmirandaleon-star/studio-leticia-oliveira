@@ -40,6 +40,12 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Servir arquivos de upload estáticos (fotos de clientes, procedimentos, banners)
 app.use('/uploads', express.static(uploadsPath));
 
+// Servir catálogo de fotos de procedimentos também pelo backend caso solicitado
+const catalogoPath = path.resolve(__dirname, '../../frontend/public/catalogo');
+if (fs.existsSync(catalogoPath)) {
+  app.use('/catalogo', express.static(catalogoPath));
+}
+
 // Rota de Health Check
 app.get('/api/health', (req, res) => {
   res.json({

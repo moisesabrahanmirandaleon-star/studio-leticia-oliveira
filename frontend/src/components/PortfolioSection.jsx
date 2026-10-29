@@ -142,6 +142,16 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 transform-gpu"
+                  onError={(e) => {
+                    const currentSrc = e.currentTarget.getAttribute('src') || '';
+                    if (!e.currentTarget.dataset.fallbackApplied) {
+                      e.currentTarget.dataset.fallbackApplied = 'true';
+                      if (currentSrc.includes('/catalogo/')) {
+                        const relativePart = currentSrc.substring(currentSrc.indexOf('/catalogo/'));
+                        e.currentTarget.src = relativePart;
+                      }
+                    }
+                  }}
                 />
                 
                 {/* Overlay com botão de visualização ao passar o mouse */}
@@ -243,6 +253,16 @@ export function PortfolioSection({ portfolioItems = [], services = [], onSelectS
                 src={resolveImageUrl(selectedItem.imageUrl)}
                 alt={selectedItem.title}
                 className="w-full h-full object-cover max-h-[60vh] md:max-h-full"
+                onError={(e) => {
+                  const currentSrc = e.currentTarget.getAttribute('src') || '';
+                  if (!e.currentTarget.dataset.fallbackApplied) {
+                    e.currentTarget.dataset.fallbackApplied = 'true';
+                    if (currentSrc.includes('/catalogo/')) {
+                      const relativePart = currentSrc.substring(currentSrc.indexOf('/catalogo/'));
+                      e.currentTarget.src = relativePart;
+                    }
+                  }
+                }}
               />
 
               {/* Botões de Avançar / Voltar dentro da Imagem */}

@@ -43,7 +43,8 @@ import {
   Bell,
   Volume2,
   VolumeX,
-  Mail
+  Mail,
+  Maximize2
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
@@ -132,6 +133,7 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const [campEndDate, setCampEndDate] = useState('');
   const [campBadgeText, setCampBadgeText] = useState('Tempo Limitado');
   const [campImageUrl, setCampImageUrl] = useState('');
+  const [expandedBonusAdmin, setExpandedBonusAdmin] = useState(null);
   const [savingCampaign, setSavingCampaign] = useState(false);
 
   // Modal para nota administrativa ao recusar/aprovar bônus
@@ -2766,13 +2768,21 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                               </div>
 
                               {camp.imageUrl && (
-                                <div className="w-full h-28 rounded-xl overflow-hidden border border-stone-200 bg-stone-100">
+                                <div
+                                  onClick={() => setExpandedBonusAdmin(camp)}
+                                  className="w-full h-32 rounded-xl overflow-hidden border border-stone-200 bg-stone-900 cursor-pointer relative group/campimg flex items-center justify-center"
+                                  title="Clique para ver o cupom/banner ampliado"
+                                >
                                   <img
                                     src={resolveImageUrl(camp.imageUrl)}
                                     alt={camp.title}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain group-hover/campimg:scale-105 transition-transform"
                                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                   />
+                                  <div className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold flex items-center gap-1 shadow">
+                                    <Maximize2 className="w-2.5 h-2.5 text-amber-300" />
+                                    <span>Ampliar</span>
+                                  </div>
                                 </div>
                               )}
 
@@ -4141,13 +4151,29 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                       </div>
 
                       {campImageUrl ? (
-                        <div className="w-full h-32 rounded-xl overflow-hidden border border-[#EBDCD5] bg-stone-100">
+                        <div
+                          onClick={() => setExpandedBonusAdmin({
+                            title: campTitle || 'Prévia do Bônus',
+                            imageUrl: campImageUrl,
+                            badgeText: campBadgeText,
+                            discountType: campDiscountType,
+                            discountValue: campDiscountValue,
+                            giftName: campGiftName,
+                            description: campDesc
+                          })}
+                          className="w-full min-h-[140px] max-h-[220px] rounded-xl overflow-hidden border border-[#EBDCD5] bg-stone-900 cursor-pointer relative group/prev flex items-center justify-center"
+                          title="Clique para ver como as clientes verão a imagem expandida"
+                        >
                           <img
                             src={resolveImageUrl(campImageUrl)}
                             alt="Prévia"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain group-hover/prev:scale-105 transition-transform"
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
+                          <div className="absolute bottom-1.5 right-1.5 px-2 py-0.5 rounded-full bg-black/75 text-white text-[10px] font-bold flex items-center gap-1 shadow">
+                            <Maximize2 className="w-2.5 h-2.5 text-amber-300" />
+                            <span>Ampliar Prévia</span>
+                          </div>
                         </div>
                       ) : (
                         <div className="w-full h-20 rounded-xl bg-stone-50 border border-dashed border-stone-200 flex items-center justify-center text-stone-400 text-xs gap-1">
@@ -4971,6 +4997,59 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
             <span className="text-[10px]">Ajustes</span>
           </button>
         </nav>
+
+        {/* MODAL DE AMPLIAÇÃO / EXPANSÃO DE FOTO DE BÔNUS NO PAINEL ADMIN */}
+        {expandedBonusAdmin && (
+          <div
+            onClick={() => setExpandedBonusAdmin(null)}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 bg-stone-950/85 backdrop-blur-md animate-fadeIn"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl max-w-2xl w-full border border-[#EBDCD5] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative"
+            >
+              <button
+                onClick={() => setExpandedBonusAdmin(null)}
+                className="absolute top-4 right-4 z-20 p-2 rounded-full bg-stone-900/70 hover:bg-stone-900 text-white transition-colors cursor-pointer shadow-md"
+                title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="p-4 bg-[#FAF6F4] border-b border-[#EBDCD5] flex items-center justify-between gap-3 pr-14">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-[#B87F6C]" />
+                  <h4 className="font-serif font-bold text-stone-900 text-base">
+                    {expandedBonusAdmin.title || 'Foto do Bônus'}
+                  </h4>
+                </div>
+                <span className="text-[11px] font-bold text-stone-500 uppercase">
+                  {expandedBonusAdmin.badgeText || 'Tempo Limitado'}
+                </span>
+              </div>
+
+              <div className="p-3 sm:p-6 bg-stone-900 flex items-center justify-center overflow-auto flex-1 min-h-[260px] max-h-[65vh]">
+                <img
+                  src={resolveImageUrl(expandedBonusAdmin.imageUrl)}
+                  alt="Ampliação"
+                  className="w-auto h-auto max-w-full max-h-[60vh] object-contain rounded-xl shadow-2xl"
+                />
+              </div>
+
+              <div className="p-4 bg-white border-t border-[#EBDCD5] flex items-center justify-between">
+                <p className="text-xs text-stone-500 truncate">
+                  Visualização de alta resolução como a cliente verá ao clicar.
+                </p>
+                <button
+                  onClick={() => setExpandedBonusAdmin(null)}
+                  className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Fechar Visualização
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>

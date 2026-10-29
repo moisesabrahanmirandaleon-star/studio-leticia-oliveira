@@ -4,7 +4,22 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Iniciando seed do banco de dados com dados da Letícia Oliveira...');
+  console.log('🌱 Iniciando verificação de segurança do seed...');
+
+  // 🛡️ TRAVA DE SEGURANÇA MÁXIMA: NUNCA APAGAR DADOS SE JÁ HOUVER REGISTROS NO BANCO!
+  // Preserva 100% de serviços, preços ajustados pela dona, campanhas de bônus, agendamentos e cadastros.
+  const countServices = await prisma.service.count();
+  const countStylists = await prisma.stylist.count();
+  const countBonus = await prisma.bonusCampaign.count();
+  const countAppointments = await prisma.appointment.count();
+
+  if (countServices > 0 || countStylists > 0 || countBonus > 0 || countAppointments > 0) {
+    console.log('🛡️ [SEGURANÇA ATIVA] O banco de dados já possui serviços, agendamentos ou campanhas reais cadastradas.');
+    console.log('🛡️ NENHUM dado foi alterado ou apagado. Todos os valores, registros e bônus permanecem 100% preservados!');
+    return;
+  }
+
+  console.log('🌱 Banco vazio detectado. Populando dados iniciais da Letícia Oliveira...');
 
   // 1. Limpar dados existentes em ordem de dependência
   await prisma.portfolioItem.deleteMany({});
