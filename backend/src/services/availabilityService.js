@@ -8,7 +8,7 @@ export function timeToMinutes(timeStr) {
 }
 
 export function minutesToTime(minutes) {
-  const h = Math.floor(minutes / 60);
+  const h = Math.floor(minutes / 60) % 24;
   const m = minutes % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
@@ -134,14 +134,24 @@ export async function getAvailableSlots({ stylistId, serviceId, date }) {
   });
 
   // Converter intervalos ocupados para minutos, incluindo buffer
-  const occupiedIntervals = existingAppointments.map((app) => ({
-    start: timeToMinutes(app.startTime),
-    // Adiciona o buffer de descanso/higienização após o agendamento
-    end: timeToMinutes(app.endTime) + bufferMinutes
-  }));
+  const occupiedIntervals = existingAppointments.map((app) => {
+    const startMins = timeToMinutes(app.startTime);
+    let endMins = timeToMinutes(app.endTime);
+    if (endMins <= startMins && (app.endTime === '00:00' || app.endTime === '24:00')) {
+      endMins = 24 * 60;
+    }
+    return {
+      start: startMins,
+      end: endMins + bufferMinutes
+    };
+  });
 
   const workStart = timeToMinutes(effectiveSchedule.startTime);
-  const workEnd = timeToMinutes(effectiveSchedule.endTime);
+  let workEnd = timeToMinutes(effectiveSchedule.endTime);
+  // Se o término for 00:00 ou 24:00 (meia-noite / final do dia) e for <= início, equivale a 1440 min
+  if (workEnd <= workStart && (effectiveSchedule.endTime === '00:00' || effectiveSchedule.endTime === '24:00')) {
+    workEnd = 24 * 60;
+  }
 
   const breakInterval = (effectiveSchedule.breakStart && effectiveSchedule.breakEnd)
     ? {
@@ -227,7 +237,11 @@ export async function validateSlotAvailability({ stylistId, date, startTime, dur
   const slotStart = timeToMinutes(startTime);
   const slotEnd = slotStart + Number(durationMinutes);
   const workStart = timeToMinutes(effectiveSchedule.startTime);
-  const workEnd = timeToMinutes(effectiveSchedule.endTime);
+  let workEnd = timeToMinutes(effectiveSchedule.endTime);
+  // Se o término for 00:00 ou 24:00 (meia-noite / final do dia) e for <= início, equivale a 1440 min
+  if (workEnd <= workStart && (effectiveSchedule.endTime === '00:00' || effectiveSchedule.endTime === '24:00')) {
+    workEnd = 24 * 60;
+  }
 
   if (slotStart < workStart || slotEnd > workEnd) {
     return { valid: false, message: 'Horário fora do expediente de atendimento da profissional.' };
@@ -264,7 +278,11 @@ export async function validateSlotAvailability({ stylistId, date, startTime, dur
 
   for (const app of existing) {
     const appStart = timeToMinutes(app.startTime);
-    const appEnd = timeToMinutes(app.endTime) + bufferMinutes;
+    let appEnd = timeToMinutes(app.endTime);
+    if (appEnd <= appStart && (app.endTime === '00:00' || app.endTime === '24:00')) {
+      appEnd = 24 * 60;
+    }
+    appEnd += bufferMinutes;
     if (hasOverlap(slotStart, slotEnd, appStart, appEnd)) {
       return { valid: false, message: 'Este horário já foi reservado ou colide com outro atendimento.' };
     }

@@ -18,7 +18,7 @@ export async function getStylistSchedule(req, res) {
 export async function updateStylistSchedule(req, res) {
   try {
     const { stylistId } = req.params;
-    const { schedules } = req.body; // array de { dayOfWeek, startTime, endTime, breakStart, breakEnd, isActive }
+    const { schedules, syncMonth, year, month } = req.body; // array de { dayOfWeek, startTime, endTime, breakStart, breakEnd, isActive }
 
     if (!Array.isArray(schedules)) {
       return res.status(400).json({ error: 'Formato inválido. Envie um array de horários.' });
@@ -53,7 +53,49 @@ export async function updateStylistSchedule(req, res) {
       updated.push(schedule);
     }
 
-    return res.json({ message: 'Horários atualizados com sucesso.', schedules: updated });
+    // Se solicitado sincronizar com a escala do mês selecionado
+    let syncedDaysCount = 0;
+    if (syncMonth && year && month) {
+      const monthStr = String(month).padStart(2, '0');
+      const scheduleMap = new Map();
+      for (const item of schedules) {
+        scheduleMap.set(Number(item.dayOfWeek), item);
+      }
+
+      const existingDateSchedules = await prisma.dateSchedule.findMany({
+        where: {
+          stylistId: Number(stylistId),
+          date: { startsWith: `${year}-${monthStr}-` },
+          isOpen: true
+        }
+      });
+
+      for (const ds of existingDateSchedules) {
+        const [y, m, d] = ds.date.split('-').map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        const newCfg = scheduleMap.get(dayOfWeek);
+        if (newCfg && newCfg.isActive) {
+          await prisma.dateSchedule.update({
+            where: { id: ds.id },
+            data: {
+              startTime: newCfg.startTime,
+              endTime: newCfg.endTime,
+              breakStart: newCfg.breakStart || null,
+              breakEnd: newCfg.breakEnd || null
+            }
+          });
+          syncedDaysCount++;
+        }
+      }
+    }
+
+    return res.json({
+      message: syncedDaysCount > 0
+        ? `Horários atualizados e sincronizados em ${syncedDaysCount} dias da escala de ${String(month).padStart(2, '0')}/${year}!`
+        : 'Horários atualizados com sucesso.',
+      schedules: updated,
+      syncedDaysCount
+    });
   } catch (error) {
     console.error('Erro ao atualizar horários:', error);
     return res.status(500).json({ error: 'Erro ao atualizar horários de atendimento.' });

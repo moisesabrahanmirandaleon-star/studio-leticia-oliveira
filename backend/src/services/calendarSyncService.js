@@ -69,7 +69,13 @@ export class CalendarSyncService {
       try {
         const cleanDate = String(appointmentData.date).split('T')[0];
         const startIso = `${cleanDate}T${appointmentData.startTime}:00`;
-        const endIso = `${cleanDate}T${appointmentData.endTime}:00`;
+        let endDate = cleanDate;
+        if (appointmentData.endTime <= appointmentData.startTime) {
+          const d = new Date(cleanDate + 'T12:00:00');
+          d.setDate(d.getDate() + 1);
+          endDate = d.toISOString().split('T')[0];
+        }
+        const endIso = `${endDate}T${appointmentData.endTime}:00`;
 
         const eventPayload = {
           summary: `✨ Studio: ${appointmentData.serviceName} - ${appointmentData.clientName}`,

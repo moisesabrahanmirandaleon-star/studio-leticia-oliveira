@@ -156,10 +156,10 @@ export const api = {
   // Horários Padrão Semanais
   getStylistSchedule: (stylistId) =>
     request(`/schedules/stylist/${stylistId}`),
-  updateStylistSchedule: (stylistId, schedules, token) =>
+  updateStylistSchedule: (stylistId, schedules, token, extra = {}) =>
     request(`/schedules/stylist/${stylistId}`, {
       method: 'PUT',
-      body: JSON.stringify({ schedules }),
+      body: JSON.stringify({ schedules, ...extra }),
       headers: { Authorization: `Bearer ${token}` }
     }),
 

@@ -1000,8 +1000,20 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
   const handleSaveSchedules = async () => {
     setSavingSchedule(true);
     try {
-      await api.updateStylistSchedule(stylistId, schedules, token);
-      alert('Horários padrão da semana atualizados com sucesso!');
+      let syncMonth = false;
+      const hasMonthOverrides = monthDays && monthDays.some(d => d.isOverride && d.isOpen);
+      if (hasMonthOverrides) {
+        syncMonth = window.confirm(
+          `Você possui dias já configurados na Escala Mensal de ${getMonthName(currentMonth)}/${currentYear}.\n\nDeseja aplicar estes novos horários também a todos os dias abertos desse mês?`
+        );
+      }
+
+      const res = await api.updateStylistSchedule(stylistId, schedules, token, {
+        syncMonth,
+        year: currentYear,
+        month: currentMonth
+      });
+      alert(res.message || 'Horários padrão da semana atualizados com sucesso!');
       loadMonthSchedule(currentYear, currentMonth);
     } catch (err) {
       alert(err.message || 'Erro ao salvar horários.');
@@ -3370,8 +3382,31 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
               {/* ========================================================= */}
               {activeTab === 'horarios' && (
                 <div className="space-y-4">
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800">
-                    ⚙️ <strong>Horário Padrão Semanal (Base):</strong> Este é o seu horário fixo da semana. Quando você não definir nenhuma escala especial na aba "Escala Mensal", o sistema usará esta jornada base como padrão.
+                  <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-2">
+                    <p>
+                      ⚙️ <strong>Horário Padrão Semanal (Base):</strong> Este é o seu horário fixo da semana. Quando você não definir nenhuma escala especial na aba "Escala Mensal", o sistema usará esta jornada base como padrão.
+                    </p>
+                    <p className="text-amber-800 bg-amber-100/60 p-2.5 rounded-xl border border-amber-200/80 leading-relaxed">
+                      💡 <strong>Como funciona o último horário de atendimento:</strong> O último horário visível para a cliente agendar é sempre o horário de término menos o tempo do procedimento. Por exemplo: se o expediente encerra às <strong>19:00</strong> e o serviço dura <strong>30 minutos (ex: Design)</strong>, o último agendamento oferecido será às <strong>18:30</strong> (das 18:30 até as 19:00). Se deseja atender às <strong>19:00, 19:30 ou 20:00</strong>, basta definir o término do seu expediente para <strong>20:00, 20:30 ou mais tarde</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3 bg-[#FAF6F3] p-3 rounded-2xl border border-[#EBDCD5]">
+                    <span className="text-xs text-stone-700 font-medium">
+                      Salve após alterar qualquer horário:
+                    </span>
+                    <button
+                      disabled={savingSchedule}
+                      onClick={handleSaveSchedules}
+                      className="px-4 py-2 rounded-full bg-[#B87F6C] hover:bg-[#A06654] text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 shrink-0"
+                    >
+                      {savingSchedule ? (
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Clock className="w-3.5 h-3.5 text-amber-200" />
+                      )}
+                      <span>Salvar Horários</span>
+                    </button>
                   </div>
 
                   <div className="space-y-3">
@@ -3409,6 +3444,11 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                                 onChange={(e) => handleScheduleChange(idx, 'endTime', e.target.value)}
                                 className="px-2 py-1 rounded-lg border border-[#DDBFB2]"
                               />
+                              {(sch.endTime === '00:00' || sch.endTime === '24:00') && (
+                                <span className="text-[10px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded font-bold" title="00:00 equivale a meia-noite (final do dia). Se deseja fechar no início da noite, selecione 19:00, 20:00 ou 21:00.">
+                                  Meia-noite (24h)
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-1.5">
@@ -5088,6 +5128,14 @@ export function AdminPanel({ isOpen, onClose, onRefreshServices }) {
                           }
                           className="w-full px-3 py-2 rounded-xl border border-[#DDBFB2]"
                         />
+                        {(selectedDayDetail.endTime === '00:00' || selectedDayDetail.endTime === '24:00') && (
+                          <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-bold block mt-1">
+                            Meia-noite (24h). Para fechar no início da noite, use 20:00 ou 21:00.
+                          </span>
+                        )}
+                        <span className="text-[10px] text-stone-500 mt-1 block leading-tight">
+                          O último horário visível ao cliente é o término menos a duração do serviço (ex: para atender às 19h com serviço de 30m, defina término 19:30 ou 20h).
+                        </span>
                       </div>
                     </div>
 
